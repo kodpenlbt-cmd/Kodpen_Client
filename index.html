@@ -40,7 +40,7 @@
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <label class="block font-bold mb-2">Nomor Meja:</label>
+            <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
             <select id="nomorMeja" class="w-full p-3 border rounded-lg outline-none">
                 <option value="">-- Pilih Meja --</option>
             </select>
@@ -51,6 +51,11 @@
             <div id="list-iced"></div>
             <div id="list-non"></div>
             <div id="list-manual"></div>
+        </div>
+
+        <div id="ringkasanContainer" class="bg-white p-4 rounded-xl shadow mb-6 hidden border-l-8 border-starbucks">
+            <label class="block font-bold mb-2 border-b pb-2 uppercase text-[10px] text-starbucks tracking-widest">Detail Pesanan Anda:</label>
+            <div id="ringkasanList" class="space-y-1 text-xs font-medium text-gray-700"></div>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
@@ -123,9 +128,18 @@
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyO3XD3968R-UDTZPP4tVPiCYu-vOFakZ8GfKwY09jHOLYiE_XnxYq40PF215GEiwTrtw/exec';
-        const menuData = { iced: [{n:"Street Coffee", h:15000}, {n:"Americano", h:15000}, {n:"ButterStreet", h:20000}, {n:"Aren Royale", h:20000}, {n:"Pop Rock", h:20000}], non: [{n:"Chocolate", h:18000}, {n:"Matcha", h:18000}, {n:"Red Velvet", h:18000}], manual: [{n:"Hot Coffee Milk", h:13000}] };
-        let keranjang = {}; let lastOrder = {}; let pollStatus;
+        // LINK APPS SCRIPT TERBARU
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbweNwkE3OmJu7IRu7FU0y-R06Osf9JCfb8ToJbF4PFHbButkG7NRGsJ63RWFpnUeI2paA/exec';
+        
+        const menuData = { 
+            iced: [{n:"Street Coffee", h:15000}, {n:"Americano", h:15000}, {n:"ButterStreet", h:20000}, {n:"Aren Royale", h:20000}, {n:"Pop Rock", h:20000}], 
+            non: [{n:"Chocolate", h:18000}, {n:"Matcha", h:18000}, {n:"Red Velvet", h:18000}], 
+            manual: [{n:"Hot Coffee Milk", h:13000}] 
+        };
+
+        let keranjang = {}; 
+        let lastOrder = {}; 
+        let pollStatus;
 
         document.addEventListener('DOMContentLoaded', () => {
             const sel = document.getElementById('nomorMeja');
@@ -139,15 +153,66 @@
                 const cont = document.getElementById('list-' + (cat==='iced'?'iced':cat==='non'?'non':'manual'));
                 menuData[cat].forEach(item => {
                     const id = item.n.replace(/\s+/g, '');
-                    cont.innerHTML += `<div class="menu-item flex justify-between items-center px-1"><div><p class="font-bold text-sm">${item.n}</p><p class="text-xs text-gray-400">Rp ${item.h.toLocaleString()}</p></div><div class="flex items-center gap-3"><button onclick="qty('${item.n}',${item.h},-1)" class="w-8 h-8 rounded-full bg-gray-100 font-bold">-</button><span id="q-${id}" class="font-bold text-sm w-4 text-center">0</span><button onclick="qty('${item.n}',${item.h},1)" class="w-8 h-8 rounded-full bg-starbucks text-white font-bold">+</button></div></div>`;
+                    cont.innerHTML += `<div class="menu-item flex justify-between items-center px-1"><div><p class="font-bold text-sm text-gray-800">${item.n}</p><p class="text-xs text-gray-400 italic">Rp ${item.h.toLocaleString()}</p></div><div class="flex items-center gap-3"><button onclick="qty('${item.n}',${item.h},-1)" class="w-8 h-8 rounded-full bg-gray-100 font-bold">-</button><span id="q-${id}" class="font-bold text-sm w-4 text-center">0</span><button onclick="qty('${item.n}',${item.h},1)" class="w-8 h-8 rounded-full bg-starbucks text-white font-bold">+</button></div></div>`;
                 });
             });
-            checkExistingOrder();
+            loadFromMemory();
             valBtn();
         });
 
-        function qty(n,h,c) { if(!keranjang[n]) keranjang[n]={q:0,h:h}; keranjang[n].q+=c; if(keranjang[n].q<0) keranjang[n].q=0; document.getElementById('q-'+n.replace(/\s+/g,'')).innerText=keranjang[n].q; let t=0; Object.values(keranjang).forEach(v=>t+=(v.q*v.h)); document.getElementById('totalHarga').innerText="Rp "+t.toLocaleString('id-ID'); valBtn(); }
-        
+        function qty(n,h,c) { 
+            if(!keranjang[n]) keranjang[n]={q:0,h:h}; 
+            keranjang[n].q+=c; if(keranjang[n].q<0) keranjang[n].q=0; 
+            document.getElementById('q-'+n.replace(/\s+/g,'')).innerText=keranjang[n].q; 
+            updateRingkasan();
+            saveToMemory();
+        }
+
+        function updateRingkasan() {
+            const cont = document.getElementById('ringkasanContainer');
+            const list = document.getElementById('ringkasanList');
+            const totalH = document.getElementById('totalHarga');
+            let t = 0; list.innerHTML = "";
+            
+            Object.keys(keranjang).forEach(k => {
+                if(keranjang[k].q > 0) {
+                    t += (keranjang[k].q * keranjang[k].h);
+                    list.innerHTML += `<div class="flex justify-between"><span>${k} (x${keranjang[k].q})</span><span>Rp ${(keranjang[k].q * keranjang[k].h).toLocaleString()}</span></div>`;
+                }
+            });
+            cont.classList.toggle('hidden', t === 0);
+            totalH.innerText = "Rp " + t.toLocaleString('id-ID');
+            valBtn();
+        }
+
+        function saveToMemory() { localStorage.setItem('kodpen_keranjang', JSON.stringify(keranjang)); }
+
+        function loadFromMemory() {
+            const savedK = localStorage.getItem('kodpen_keranjang');
+            const savedID = localStorage.getItem('kodpen_id');
+            const savedData = localStorage.getItem('kodpen_data');
+
+            if(savedK) { 
+                keranjang = JSON.parse(savedK); 
+                updateRingkasan(); 
+                Object.keys(keranjang).forEach(k => { 
+                    const el = document.getElementById('q-'+k.replace(/\s+/g,'')); 
+                    if(el) el.innerText = keranjang[k].q; 
+                }); 
+            }
+            
+            if(savedID && savedData) {
+                lastOrder = JSON.parse(savedData);
+                fetch(`${scriptURL}?orderId=${savedID}`).then(r => r.text()).then(status => {
+                    if (status !== "Selesai" && status !== "NotFound") {
+                        document.getElementById('btnPesan').classList.add('hidden');
+                        document.getElementById('btnMyBill').classList.remove('hidden');
+                        startPolling(savedID, lastOrder.pembayaran);
+                    } else { localStorage.clear(); }
+                });
+            }
+        }
+
         function valBtn() {
             const pay = document.querySelector('input[name="payment"]:checked').value;
             const upArea = document.getElementById('uploadArea');
@@ -156,25 +221,10 @@
             else { upArea.classList.remove('hidden'); document.getElementById('qrisSection').classList.toggle('hidden', pay!=='QRIS'); if(document.getElementById('buktiFile').files.length===0){ btn.disabled=true; btn.classList.add('opacity-50'); } else { btn.disabled=false; btn.classList.remove('opacity-50'); } }
         }
 
-        function checkExistingOrder() {
-            const savedId = localStorage.getItem('kodpenOrderId');
-            const savedData = localStorage.getItem('kodpenData');
-            if (savedId && savedData) {
-                lastOrder = JSON.parse(savedData);
-                fetch(`${scriptURL}?orderId=${savedId}`).then(r => r.text()).then(status => {
-                    if (status !== "Selesai" && status !== "NotFound") {
-                        document.getElementById('btnPesan').classList.add('hidden');
-                        document.getElementById('btnMyBill').classList.remove('hidden');
-                        startPolling(savedId, lastOrder.pembayaran);
-                    } else { localStorage.clear(); }
-                });
-            }
-        }
-
         async function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
             const fileInput = document.getElementById('buktiFile');
-            let det = ""; Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) det += `${k} (${keranjang[k].q}x), `; });
+            let det = ""; Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) det += `${k} (x${keranjang[k].q}), `; });
             if(!meja || !det) return alert("Pilih Meja & Menu!");
 
             const btn = document.getElementById('btnPesan'); btn.innerText = "MENGIRIM..."; btn.disabled = true;
@@ -189,8 +239,8 @@
 
             fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...lastOrder, fileBase64: fileB64, fileName: fName}) })
             .then(() => {
-                localStorage.setItem('kodpenOrderId', orderId); localStorage.setItem('kodpenData', JSON.stringify(lastOrder));
-                alert("PESANAN TERKIRIM!");
+                localStorage.setItem('kodpen_id', orderId); localStorage.setItem('kodpen_data', JSON.stringify(lastOrder));
+                alert("PESANAN BERHASIL TERKIRIM!");
                 btn.classList.add('hidden'); document.getElementById('btnMyBill').classList.remove('hidden');
                 startPolling(orderId, lastOrder.pembayaran);
             });
@@ -216,7 +266,10 @@
             document.getElementById('receipt-items').innerHTML = lastOrder.pesanan.split(', ').map(item => `<div style="display:flex; justify-content:space-between;"><span>${item}</span></div>`).join('');
             document.getElementById('receipt-total').innerText = lastOrder.total;
             document.getElementById('receipt-pay').innerText = lastOrder.pembayaran;
-            html2canvas(area, {scale:3}).then(c => { const a = document.createElement('a'); a.download = `NOTA_KODPEN_${lastOrder.meja}.png`; a.href = c.toDataURL(); a.click(); });
+            
+            html2canvas(area, {scale:3}).then(c => { 
+                const a = document.createElement('a'); a.download = `NOTA_KODPEN_MEJA_${lastOrder.meja}.png`; a.href = c.toDataURL(); a.click(); 
+            });
         }
     </script>
 </body>
