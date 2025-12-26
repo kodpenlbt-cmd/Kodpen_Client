@@ -3,293 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KODPEN COFFEE - Order Menu</title>
+    <title>KODPEN COFFEE - Order</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --sb-green: #00704A; }
-        .dark-mode { background-color: #121212; color: #e0e0e0; }
-        .dark-mode .bg-white { background-color: #1f2937; color: #f3f4f6; }
         .bg-starbucks { background-color: var(--sb-green); }
         .text-starbucks { color: var(--sb-green); }
-        body { transition: background 0.3s, color 0.3s; }
-        .menu-category { border-left: 4px solid var(--sb-green); padding-left: 10px; margin-top: 20px; font-weight: 800; color: var(--sb-green); }
         .menu-item { border-bottom: 1px solid #eee; padding: 12px 0; }
-        .dark-mode .menu-item { border-bottom: 1px solid #374151; }
-        
-        #receipt-area { 
-            width: 58mm; 
-            padding: 10px; 
-            background: white; 
-            color: black; 
-            font-family: 'Courier New', Courier, monospace; 
-            font-size: 11px;
-            line-height: 1.2;
-        }
-        .receipt-hidden { position: absolute; left: -9999px; top: 0; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
-
     <nav class="bg-starbucks text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="font-bold text-lg tracking-wider">KODPEN COFFEE</h1>
-            <button id="darkToggle" class="p-2 rounded-full hover:bg-green-700 transition">
-                <i id="themeIcon" class="fas fa-moon"></i>
-            </button>
-        </div>
+        <h1 class="text-center font-bold text-lg">KODPEN COFFEE</h1>
     </nav>
 
     <div class="container mx-auto px-4 py-6 max-w-md">
-        <div class="text-center mb-8">
-            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4" onerror="this.src='https://via.placeholder.com/150?text=Logo+Kodpen'">
-            <h2 class="text-2xl font-extrabold text-starbucks italic">"So Ba Kopi Bro?"</h2>
+        <div class="mb-6 rounded-xl overflow-hidden shadow-lg border-4 border-starbucks">
+            <img src="ThisOurMenu.jpg" class="w-full" alt="Menu">
         </div>
 
-        <div class="space-y-6">
-            <div class="mb-4 rounded-xl shadow-lg border-4 border-starbucks overflow-hidden">
-                <img src="ThisOurMenu.jpg" alt="Banner Menu" class="w-full" onerror="this.src='https://via.placeholder.com/400x300?text=Gambar+Menu+Kopi'">
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow">
-                <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
-                <select id="nomorMeja" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
-                    <option value="">-- Pilih Meja --</option>
-                </select>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow">
-                <label class="block font-bold mb-2 border-b pb-2">Daftar Menu:</label>
-                <div class="menu-category uppercase text-xs">Iced Coffee</div>
-                <div id="iced-coffee-list"></div>
-                <div class="menu-category uppercase text-xs">Non Coffee</div>
-                <div id="non-coffee-list"></div>
-                <div class="menu-category uppercase text-xs">Manual Brew</div>
-                <div id="manual-brew-list"></div>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow">
-                <label class="block font-bold mb-4">Metode Pembayaran:</label>
-                <div class="space-y-2">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700">
-                        <input type="radio" name="payment" value="Transfer BNI" class="mr-3"> Transfer BNI
-                    </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700">
-                        <input type="radio" name="payment" value="QRIS" class="mr-3"> QRIS (Barcode)
-                    </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700">
-                        <input type="radio" name="payment" value="Tunai" class="mr-3"> Tunai (Kasir)
-                    </label>
-                </div>
-                <div id="payInfo" class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg hidden text-sm"></div>
-                
-                <div id="uploadSection" class="mt-4 p-4 border-2 border-dashed border-gray-300 rounded-lg hidden">
-                    <label class="block font-bold mb-2 text-xs uppercase text-gray-500">Upload Bukti Pembayaran:</label>
-                    <input type="file" id="fileBukti" accept="image/*" class="w-full text-xs text-gray-500">
-                </div>
-            </div>
-
-            <div class="text-center py-6">
-                <div class="text-xl font-bold mb-4">Total: <span id="totalHarga">Rp 0</span></div>
-                <button id="btnPesan" onclick="handlePesan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition">
-                    PESAN SEKARANG
-                </button>
-                <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl animate-bounce">
-                    <i class="fas fa-file-invoice mr-2"></i> MY BILL (UNDUH NOTA)
-                </button>
-            </div>
+        <div class="bg-white p-4 rounded-xl shadow mb-6">
+            <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
+            <select id="nomorMeja" class="w-full p-3 border rounded-lg">
+                <option value="">-- Pilih Meja --</option>
+            </select>
         </div>
-    </div>
 
-    <div class="receipt-hidden">
-        <div id="receipt-area">
-            <div style="text-align: center; border-bottom: 1px dashed black; padding-bottom: 5px; margin-bottom: 5px;">
-                <img src="logo_kodpen.png" style="width: 25mm; margin: 0 auto 5px auto; display: block;" onerror="this.style.display='none'">
-                <strong style="font-size: 14px;">KODPEN COFFEE</strong><br>
-                "So Ba Kopi Bro?"
-            </div>
-            <div id="receipt-meta" style="font-size: 10px; margin-bottom: 5px;"></div>
-            <div style="border-bottom: 1px dashed black; margin-bottom: 5px;"></div>
-            <div id="receipt-items"></div>
-            <div style="border-top: 1px dashed black; margin-top: 5px; padding-top: 5px;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold;">
-                    <span>TOTAL:</span>
-                    <span id="receipt-total"></span>
-                </div>
-                <div style="font-size: 10px; margin-top: 3px;">Metode: <span id="receipt-pay"></span></div>
-            </div>
-            <div style="text-align: center; margin-top: 15px; border-top: 1px dashed black; padding-top: 5px; font-size: 10px;">
-                terima kasih dan di tunggu<br>kedatangannya kembali di<br><strong>kodpen coffee</strong>
-            </div>
+        <div class="bg-white p-4 rounded-xl shadow mb-6">
+            <h3 class="font-bold border-b pb-2 mb-4">Daftar Menu:</h3>
+            <div id="menu-container"></div>
+        </div>
+
+        <div class="text-center py-6">
+            <h3 class="text-xl font-bold mb-4">Total: <span id="totalHarga">Rp 0</span></h3>
+            <button onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl">PESAN SEKARANG</button>
         </div>
     </div>
 
     <script>
+        const scriptURL = 'URL_WEB_APP_ANDA'; // GANTI INI DENGAN LINK DEPLOYMENT TERBARU
         const menuData = {
-            iced: [
+            "ICED COFFEE": [
                 {n: "Street Coffee", h: 15000}, {n: "Americano", h: 15000},
                 {n: "ButterStreet", h: 20000}, {n: "Aren Royale", h: 20000}, {n: "Pop Rock", h: 20000}
             ],
-            non: [
+            "NON COFFEE": [
                 {n: "Chocolate", h: 18000}, {n: "Matcha", h: 18000}, {n: "Red Velvet", h: 18000}
             ],
-            manual: [ {n: "Hot Coffee Milk", h: 13000} ]
+            "MANUAL BREW": [{n: "Hot Coffee Milk", h: 13000}]
         };
 
         let keranjang = {};
-        let totalSeluruhnya = 0;
-        let lastOrderData = {};
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectMeja = document.getElementById('nomorMeja');
-            for(let i=1; i<=20; i++) {
-                let opt = document.createElement('option');
-                opt.value = i; opt.innerText = "Meja " + i;
-                selectMeja.appendChild(opt);
-            }
-
-            renderList('iced-coffee-list', menuData.iced);
-            renderList('non-coffee-list', menuData.non);
-            renderList('manual-brew-list', menuData.manual);
-
-            document.getElementById('darkToggle').addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                document.getElementById('themeIcon').classList.toggle('fa-moon');
-                document.getElementById('themeIcon').classList.toggle('fa-sun');
-            });
-
-            document.querySelectorAll('input[name="payment"]').forEach(el => {
-                el.addEventListener('change', (e) => {
-                    const info = document.getElementById('payInfo');
-                    const uploadSection = document.getElementById('uploadSection');
-                    info.classList.remove('hidden');
-                    
-                    if(e.target.value === 'Transfer BNI' || e.target.value === 'QRIS') {
-                        uploadSection.classList.remove('hidden');
-                    } else {
-                        uploadSection.classList.add('hidden');
-                    }
-
-                    if(e.target.value === 'Transfer BNI') {
-                        info.innerHTML = `<strong>BNI:</strong> 0388924011<br>a.n FAZRIN HARUN`;
-                    } else if(e.target.value === 'QRIS') {
-                        info.innerHTML = `
-                            <img src="Barcode.png" class="w-full rounded-lg shadow-sm mb-2" onerror="this.src='https://via.placeholder.com/200?text=Scan+QRIS'">
-                            <a href="Barcode.png" download="QRIS_Kodpen.png" class="block text-center bg-gray-200 py-2 rounded-lg text-xs font-bold hover:bg-gray-300">
-                                <i class="fas fa-download mr-1"></i> UNDUH BARCODE
-                            </a>`;
-                    } else {
-                        info.innerHTML = `<p class="text-red-500 font-bold uppercase italic">PEMBAYARAN DI KASIR!</p>`;
-                    }
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('nomorMeja');
+            for(let i=1; i<=20; i++) select.innerHTML += `<option value="${i}">Meja ${i}</option>`;
+            
+            const container = document.getElementById('menu-container');
+            for(let cat in menuData) {
+                container.innerHTML += `<div class="font-bold text-starbucks mt-4 border-l-4 border-green-700 pl-2 text-sm">${cat}</div>`;
+                menuData[cat].forEach(item => {
+                    container.innerHTML += `
+                        <div class="menu-item flex justify-between items-center">
+                            <div><p class="font-bold text-sm">${item.n}</p><p class="text-xs text-gray-500">Rp ${item.h.toLocaleString()}</p></div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 bg-gray-200 rounded-full">-</button>
+                                <span id="qty-${item.n.replace(/\s+/g, '')}" class="text-sm font-bold">0</span>
+                                <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 bg-starbucks text-white rounded-full">+</button>
+                            </div>
+                        </div>`;
                 });
-            });
+            }
         });
 
-        function renderList(elementId, items) {
-            const list = document.getElementById(elementId);
-            items.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = "menu-item flex justify-between items-center";
-                const safeId = item.n.replace(/\s+/g, '');
-                itemDiv.innerHTML = `
-                    <div><p class="font-bold">${item.n}</p><p class="text-sm text-gray-500">Rp ${item.h.toLocaleString('id-ID')}</p></div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
-                        <span id="qty-${safeId}" class="font-bold">0</span>
-                        <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
-                    </div>`;
-                list.appendChild(itemDiv);
-            });
+        function updateQty(n, h, c) {
+            if(!keranjang[n]) keranjang[n] = { q: 0, h: h };
+            keranjang[n].q += c; if(keranjang[n].q < 0) keranjang[n].q = 0;
+            document.getElementById('qty-'+n.replace(/\s+/g, '')).innerText = keranjang[n].q;
+            let total = 0; for(let k in keranjang) total += keranjang[k].q * keranjang[k].h;
+            document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString();
         }
 
-        function updateQty(nama, harga, change) {
-            if(!keranjang[nama]) keranjang[nama] = { qty: 0, harga: harga };
-            keranjang[nama].qty += change;
-            if(keranjang[nama].qty < 0) keranjang[nama].qty = 0;
-            document.getElementById('qty-' + nama.replace(/\s+/g, '')).innerText = keranjang[nama].qty;
-            hitungTotal();
-        }
-
-        function hitungTotal() {
-            totalSeluruhnya = 0;
-            for(let m in keranjang) totalSeluruhnya += keranjang[m].qty * keranjang[m].harga;
-            document.getElementById('totalHarga').innerText = "Rp " + totalSeluruhnya.toLocaleString('id-ID');
-        }
-
-        // FUNGSI UNTUK MENGUBAH FILE MENJADI TEXT (BASE64) AGAR BISA DIKIRIM KE GOOGLE SHEETS
-        function getBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        async function handlePesan() {
+        function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
-            const bayar = document.querySelector('input[name="payment"]:checked')?.value;
-            const fileInput = document.getElementById('fileBukti');
+            if(!meja) return alert("Pilih Meja!");
+            let pesanan = ""; for(let k in keranjang) if(keranjang[k].q > 0) pesanan += `${k} (${keranjang[k].q}x), `;
+            if(!pesanan) return alert("Pilih Menu!");
             
-            if(!meja || !bayar || totalSeluruhnya === 0) return alert("Mohon lengkapi Meja, Menu, dan Pembayaran!");
-
-            // Validasi upload bukti jika non-tunai
-            let fileData = "";
-            let fileName = "";
-            if(bayar !== 'Tunai') {
-                if(fileInput.files.length === 0) return alert("Mohon upload bukti pembayaran Anda!");
-                fileData = await getBase64(fileInput.files[0]);
-                fileName = fileInput.files[0].name;
-            }
-
-            let detailOrder = "";
-            let listStruk = "";
-            for(let m in keranjang) { 
-                if(keranjang[m].qty > 0) {
-                    detailOrder += `${m} (${keranjang[m].qty}x), `;
-                    listStruk += `<div style="display:flex; justify-content:space-between;"><span>${m} x${keranjang[m].qty}</span><span>${(keranjang[m].qty * keranjang[m].harga).toLocaleString('id-ID')}</span></div>`;
-                }
-            }
-
-            lastOrderData = { meja, bayar, listStruk, total: "Rp " + totalSeluruhnya.toLocaleString('id-ID'), date: new Date().toLocaleString('id-ID') };
-            
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbyFTS9ghslQoJDl_ZAug_ftmJE2xmvMhZchXMLyMTjRvLLmQCVgqvrwcHfxBuztWqKySg/exec';
-            
-            alert("Pesanan sedang dikirim ke barista...");
-            
-            fetch(scriptURL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    meja, 
-                    pesanan: detailOrder, 
-                    pembayaran: bayar, 
-                    total: lastOrderData.total,
-                    fileBase64: fileData,  // Data file dikirim di sini
-                    fileName: fileName     // Nama file dikirim di sini
-                }) 
-            })
-            .then(() => {
-                alert("Pesanan Berhasil! Silakan klik tombol MY BILL untuk melihat nota.");
-                document.getElementById('btnPesan').classList.add('hidden');
-                document.getElementById('btnMyBill').classList.remove('hidden');
-            })
-            .catch(() => alert("Koneksi gagal. Periksa URL script Anda."));
-        }
-
-        function unduhStruk() {
-            document.getElementById('receipt-meta').innerHTML = `Tgl: ${lastOrderData.date}<br>Meja: ${lastOrderData.meja}`;
-            document.getElementById('receipt-items').innerHTML = lastOrderData.listStruk;
-            document.getElementById('receipt-total').innerText = lastOrderData.total;
-            document.getElementById('receipt-pay').innerText = lastOrderData.bayar;
-
-            const area = document.getElementById('receipt-area');
-            html2canvas(area, { scale: 3 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Nota_KODPEN_Meja_${lastOrderData.meja}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
+            fetch(scriptURL, { method: 'POST', body: JSON.stringify({meja, pesanan, pembayaran: 'Tunai', total: document.getElementById('totalHarga').innerText}) })
+            .then(() => alert("Pesanan Terkirim!")).catch(e => alert("Error: " + e));
         }
     </script>
 </body>
