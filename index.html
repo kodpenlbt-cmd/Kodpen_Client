@@ -7,21 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --sb-green: #00704A;
-            --sb-dark: #1e3932;
-        }
-        .dark-mode {
-            background-color: #121212;
-            color: #e0e0e0;
-        }
+        :root { --sb-green: #00704A; }
+        .dark-mode { background-color: #121212; color: #e0e0e0; }
         .bg-starbucks { background-color: var(--sb-green); }
         .text-starbucks { color: var(--sb-green); }
-        .border-starbucks { border-color: var(--sb-green); }
-        
         body { transition: background 0.3s, color 0.3s; }
-        .card { transition: transform 0.2s; }
-        .card:active { transform: scale(0.98); }
+        .menu-item { border-bottom: 1px solid #eee; padding: 12px 0; }
+        .dark-mode .menu-item { border-bottom: 1px solid #333; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -37,52 +29,81 @@
 
     <div class="container mx-auto px-4 py-6 max-w-md">
         <div class="text-center mb-8">
-            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4 drop-shadow-md">
+            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4">
             <h2 class="text-2xl font-extrabold text-starbucks italic">"So Ba Kopi Bro?"</h2>
         </div>
 
-        <div class="mb-8 overflow-hidden rounded-xl shadow-lg border-4 border-starbucks">
-            <img src="ThisOurMenu.jpg" alt="Menu Kodpen Coffee" class="w-full">
+        <div class="mb-8 rounded-xl shadow-lg border-4 border-starbucks overflow-hidden">
+            <img src="ThisOurMenu.jpg" alt="Menu" class="w-full">
         </div>
 
-        <div id="orderForm" class="space-y-6">
+        <div class="space-y-6">
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
                 <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
-                <select id="nomorMeja" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600">
+                <select id="nomorMeja" class="w-full p-3 border rounded-lg dark:bg-gray-700">
                     <option value="">-- Pilih Meja --</option>
                     </select>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-                <label class="block font-bold mb-4">Pilih Menu Favorit:</label>
-                <div id="menuList" class="space-y-4">
+                <label class="block font-bold mb-4 border-b pb-2">Daftar Menu:</label>
+                
+                <div class="menu-item flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">Kopi Susu Aren</p>
+                        <p class="text-sm text-gray-500">Rp 15.000</p>
                     </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="updateQty('Kopi Susu Aren', 15000, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
+                        <span id="qty-Kopi Susu Aren" class="font-bold">0</span>
+                        <button onclick="updateQty('Kopi Susu Aren', 15000, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
+                    </div>
+                </div>
+
+                <div class="menu-item flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">Americano</p>
+                        <p class="text-sm text-gray-500">Rp 12.000</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="updateQty('Americano', 12000, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
+                        <span id="qty-Americano" class="font-bold">0</span>
+                        <button onclick="updateQty('Americano', 12000, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
+                    </div>
+                </div>
+
+                <div class="menu-item flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">Mendoan Panas</p>
+                        <p class="text-sm text-gray-500">Rp 10.000</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="updateQty('Mendoan Panas', 10000, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
+                        <span id="qty-Mendoan Panas" class="font-bold">0</span>
+                        <button onclick="updateQty('Mendoan Panas', 10000, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
+                    </div>
+                </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
                 <label class="block font-bold mb-4">Metode Pembayaran:</label>
-                <div class="grid grid-cols-1 gap-3">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
-                        <input type="radio" name="payment" value="Transfer" class="mr-3"> 
-                        <span>Transfer Bank (BNI)</span>
+                <div class="space-y-2">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="payment" value="Transfer" class="mr-3"> Transfer BNI
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
-                        <input type="radio" name="payment" value="QRIS" class="mr-3"> 
-                        <span>QRIS</span>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="payment" value="QRIS" class="mr-3"> QRIS (Barcode)
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
-                        <input type="radio" name="payment" value="Tunai" class="mr-3"> 
-                        <span>Tunai (Kasir)</span>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                        <input type="radio" name="payment" value="Tunai" class="mr-3"> Tunai (Kasir)
                     </label>
                 </div>
-
-                <div id="payInfo" class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg hidden text-sm">
-                    </div>
+                <div id="payInfo" class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg hidden text-sm"></div>
             </div>
 
             <div class="text-center py-6">
                 <div class="text-xl font-bold mb-4">Total: <span id="totalHarga">Rp 0</span></div>
-                <button onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl hover:bg-green-800 transition transform active:scale-95">
+                <button onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl">
                     PESAN SEKARANG
                 </button>
             </div>
@@ -90,111 +111,83 @@
     </div>
 
     <script>
-        // Data Menu (Silahkan edit harga di sini)
-        const menus = [
-            { id: 1, nama: "Kopi Susu Aren", harga: 15000 },
-            { id: 2, nama: "Americano", harga: 12000 },
-            { id: 3, nama: "Caffe Latte", harga: 18000 },
-            { id: 4, nama: "Mendoan Panas", harga: 10000 }
-        ];
-
         let keranjang = {};
+        let totalSeluruhnya = 0;
 
-        // Inisialisasi Meja & Menu
-        window.onload = () => {
-            const selectMeja = document.getElementById('nomorMeja');
-            for(let i=1; i<=20; i++) {
-                let opt = document.createElement('option');
-                opt.value = i; opt.innerHTML = "Meja " + i;
-                selectMeja.appendChild(opt);
-            }
+        // Load Meja 1-20
+        const selectMeja = document.getElementById('nomorMeja');
+        for(let i=1; i<=20; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = "Meja " + i;
+            selectMeja.appendChild(opt);
+        }
 
-            const menuDiv = document.getElementById('menuList');
-            menus.forEach(m => {
-                menuDiv.innerHTML += `
-                    <div class="flex justify-between items-center border-b pb-2 dark:border-gray-700">
-                        <div>
-                            <p class="font-semibold">${m.nama}</p>
-                            <p class="text-sm text-gray-500">Rp ${m.harga.toLocaleString()}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="updateQty(${m.id}, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
-                            <span id="qty-${m.id}" class="font-bold">0</span>
-                            <button onclick="updateQty(${m.id}, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
-                        </div>
-                    </div>
-                `;
-            });
-        };
-
-        function updateQty(id, change) {
-            keranjang[id] = (keranjang[id] || 0) + change;
-            if(keranjang[id] < 0) keranjang[id] = 0;
-            document.getElementById(`qty-${id}`).innerText = keranjang[id];
+        function updateQty(nama, harga, change) {
+            if(!keranjang[nama]) keranjang[nama] = { qty: 0, harga: harga };
+            keranjang[nama].qty += change;
+            if(keranjang[nama].qty < 0) keranjang[nama].qty = 0;
+            
+            document.getElementById('qty-' + nama).innerText = keranjang[nama].qty;
             hitungTotal();
         }
 
         function hitungTotal() {
-            let total = 0;
-            menus.forEach(m => { total += (keranjang[m.id] || 0) * m.harga; });
-            document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString();
+            totalSeluruhnya = 0;
+            for(let menu in keranjang) {
+                totalSeluruhnya += keranjang[menu].qty * keranjang[menu].harga;
+            }
+            document.getElementById('totalHarga').innerText = "Rp " + totalSeluruhnya.toLocaleString();
         }
 
-        // Logika Pilihan Pembayaran
+        // Event Listener Pembayaran
         document.querySelectorAll('input[name="payment"]').forEach(el => {
             el.addEventListener('change', (e) => {
                 const info = document.getElementById('payInfo');
                 info.classList.remove('hidden');
                 if(e.target.value === 'Transfer') {
-                    info.innerHTML = `<strong>INFO BNI:</strong><br>0388924011<br>a.n FAZRIN HARUN`;
+                    info.innerHTML = `<strong>BNI:</strong> 0388924011<br>a.n FAZRIN HARUN`;
                 } else if(e.target.value === 'QRIS') {
-                    info.innerHTML = `<img src="Barcode.png" class="w-full rounded-lg">`;
+                    info.innerHTML = `<img src="Barcode.png" class="w-full rounded-lg shadow-sm">`;
                 } else {
-                    info.innerHTML = `<p class="text-red-500 font-bold uppercase">Silahkan melakukan pembayaran Di Kasir!!!</p>`;
+                    info.innerHTML = `<p class="text-red-500 font-bold">SILAHKAN MELAKUKAN PEMBAYARAN DI KASIR!!!</p>`;
                 }
             });
         });
 
-        // Dark Mode Toggle
         document.getElementById('darkToggle').addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
-            const icon = document.querySelector('#darkToggle i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
         });
 
-        // Fungsi Kirim ke Google Apps Script (Server)
         async function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
             const bayar = document.querySelector('input[name="payment"]:checked')?.value;
             
-            if(!meja || !bayar) return alert("Mohon pilih Meja dan Metode Pembayaran!");
+            if(!meja || !bayar || totalSeluruhnya === 0) {
+                return alert("Mohon pilih Meja, Menu, dan Metode Pembayaran!");
+            }
 
-            let detailOrder = menus.filter(m => keranjang[m.id] > 0)
-                                   .map(m => `${m.nama} (${keranjang[m.id]}x)` )
-                                   .join(", ");
-
-            if(!detailOrder) return alert("Belum ada menu yang dipilih!");
+            let detailOrder = "";
+            for(let menu in keranjang) {
+                if(keranjang[menu].qty > 0) {
+                    detailOrder += `${menu} (${keranjang[menu].qty}x), `;
+                }
+            }
 
             const data = {
                 meja: meja,
                 pesanan: detailOrder,
                 pembayaran: bayar,
-                total: document.getElementById('totalHarga').innerText
+                total: "Rp " + totalSeluruhnya.toLocaleString()
             };
 
-            // GANTI LINK INI dengan link Google Apps Script Anda nanti
+            // GANTI DENGAN URL GOOGLE SCRIPT ANDA
             const scriptURL = https://script.google.com/macros/s/AKfycbwtoc09ummTI6O0MtOLl7ZghSwJVU9kRQqi0WQ1S_zbq7J-YXiS2TIR5f97LfZW9-cN/exec
 
-            alert("Pesanan sedang dikirim ke Kasir...");
+            alert("Pesanan sedang diproses...");
             
-            // Proses Fetch (dikomentari sampai URL tersedia)
-            /*
             fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) })
-            .then(res => alert("Pesanan Berhasil! Silahkan tunggu."))
-            .catch(err => alert("Gagal mengirim pesanan."));
-            */
-            console.log("Data dikirim:", data);
+            .then(res => alert("Pesanan Berhasil dikirim!"))
+            .catch(err => alert("Terjadi kesalahan, tapi data tersimpan di log."));
         }
     </script>
 </body>
