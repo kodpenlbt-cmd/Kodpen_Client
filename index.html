@@ -24,38 +24,41 @@
     <div class="container mx-auto px-4 py-6 max-w-md">
         <div id="notifPermissionBox" class="hidden mb-4 p-4 bg-blue-700 text-white rounded-2xl shadow-lg flex flex-col gap-2">
             <p class="text-xs font-bold uppercase text-center">Aktifkan Notifikasi & Suara?</p>
-            <p class="text-[10px] opacity-80 italic text-center">Agar HP tetap berbunyi saat pesanan siap meskipun layar mati atau browser ditutup.</p>
             <button onclick="requestNotifPermission()" class="bg-white text-blue-700 py-2 rounded-xl font-black text-xs uppercase">AKTIFKAN SEKARANG</button>
         </div>
 
         <div class="text-center mb-6">
             <img src="logo_kodpen.png" class="mx-auto w-24 mb-2" onerror="this.src='https://via.placeholder.com/100?text=KODPEN'">
-            <h2 class="text-xl font-black text-starbucks italic uppercase tracking-tighter text-shadow">"So Ba Kopi Bro?"</h2>
+            <h2 class="text-xl font-black text-starbucks italic uppercase tracking-tighter">"So Ba Kopi Bro?"</h2>
         </div>
 
         <div class="mb-4 rounded-xl shadow-lg border-4 border-starbucks overflow-hidden bg-white"><img src="ThisOurMenu.jpg" class="w-full"></div>
 
-        <div class="bg-white p-4 rounded-xl shadow mb-6 border-l-8 border-starbucks">
-            <label class="block font-bold mb-2">Nomor Meja:</label>
+        <div class="bg-white p-4 rounded-xl shadow mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <label class="font-bold text-sm">Nomor Meja:</label>
+                <button id="muteBtn" onclick="toggleMute()" class="text-starbucks bg-gray-100 p-2 rounded-full">
+                    <i id="muteIcon" class="fas fa-volume-up fa-lg"></i>
+                </button>
+            </div>
             <select id="nomorMeja" class="w-full p-3 border rounded-lg outline-none"><option value="">-- Pilih Meja --</option></select>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <label class="block font-bold mb-2 border-b pb-2 uppercase text-xs tracking-widest text-gray-400">Daftar Menu:</label>
+            <label class="block font-bold mb-2 border-b pb-2 uppercase text-xs text-gray-400">Daftar Menu:</label>
             <div id="list-iced"></div><div id="list-non"></div><div id="list-manual"></div>
         </div>
 
         <div id="ringkasanContainer" class="bg-white p-4 rounded-xl shadow mb-6 hidden border-l-8 border-starbucks">
-            <label class="block font-bold mb-2 border-b pb-2 uppercase text-[10px] text-starbucks tracking-widest">Detail Pesanan:</label>
-            <div id="ringkasanList" class="space-y-1 text-xs font-medium text-gray-700"></div>
+            <label class="block font-bold mb-2 border-b pb-2 uppercase text-[10px] text-starbucks">Detail Pilihan Anda:</label>
+            <div id="ringkasanList" class="space-y-1 text-xs font-medium text-gray-700 border-b pb-2 mb-2"></div>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <label class="block font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Metode Pembayaran:</label>
             <div class="space-y-3 mb-4">
                 <label class="flex items-center p-3 border rounded-lg cursor-pointer">
                     <input type="radio" name="payment" value="Transfer BNI" onchange="valBtn()" class="mr-3"> 
-                    <div class="flex flex-col"><span class="font-bold">Transfer BNI</span><span class="text-[10px] text-blue-600">No. Rek: 1234567890 (a/n Fazri)</span></div>
+                    <div class="flex flex-col"><span class="font-bold">Transfer BNI</span><span class="text-[10px] text-blue-600">No. Rek: 123456789 (a/n Fazri)</span></div>
                 </label>
                 <label class="flex items-center p-3 border rounded-lg cursor-pointer">
                     <input type="radio" name="payment" value="QRIS" onchange="valBtn()" class="mr-3"> QRIS (Scan Barcode)
@@ -64,11 +67,9 @@
                     <input type="radio" name="payment" value="Tunai" onchange="valBtn()" class="mr-3" checked> Tunai (Kasir)
                 </label>
             </div>
-
             <div id="uploadArea" class="hidden p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div id="qrisSection" class="hidden text-center mb-4">
                     <img src="Barcode.png" class="w-32 mx-auto rounded shadow border-2 border-starbucks">
-                    <p class="text-[9px] font-bold text-starbucks uppercase">Silakan Scan Barcode QRIS</p>
                 </div>
                 <p class="text-[10px] font-bold text-red-600 mb-2 uppercase text-center">Wajib Upload Bukti!</p>
                 <input type="file" id="buktiFile" accept="image/*" onchange="valBtn()" class="text-xs w-full">
@@ -87,19 +88,20 @@
             </div>
 
             <div class="text-xl font-bold mb-4 border-t pt-2 text-gray-800">Total: <span id="totalHarga" class="text-starbucks text-2xl font-black">Rp 0</span></div>
-            <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl">PESAN SEKARANG</button>
+            <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition">PESAN SEKARANG</button>
             <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl uppercase text-xs">MY BILL (NOTA)</button>
         </div>
     </div>
     <div class="receipt-hidden"><div id="receipt-area"></div></div>
 
     <script>
+        // MASUKKAN LINK APPS SCRIPT ANDA DI SINI
         const scriptURL = 'https://script.google.com/macros/s/AKfycbwedrT_TZookmjbAmsr4KxQhsM_sIWY0Dchf5z1WdZkaLQ184MQAsZR5BjYDxQMPggI4w/exec';
         const menuData = { iced:[{n:"Street Coffee", h:15000},{n:"Americano", h:15000},{n:"ButterStreet", h:20000},{n:"Aren Royale", h:20000},{n:"Pop Rock", h:20000}], non:[{n:"Chocolate", h:18000},{n:"Matcha", h:18000},{n:"Red Velvet", h:18000}], manual:[{n:"Hot Coffee Milk", h:13000}] };
         
-        let keranjang = {}; let pollStatus; let currentStatus = ""; let jemputInterval;
-        const soundProses = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); // Ding
-        const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); // Alarm
+        let keranjang = {}; let pollStatus; let currentStatus = ""; let jemputInterval; let isMuted = false;
+        const soundProses = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+        const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
 
         document.addEventListener('DOMContentLoaded', () => {
             const sel = document.getElementById('nomorMeja');
@@ -119,21 +121,34 @@
             valBtn();
         });
 
-        function requestNotifPermission() { Notification.requestPermission().then(p => { if(p === "granted") { document.getElementById('notifPermissionBox').classList.add('hidden'); soundProses.play(); } }); }
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute fa-lg text-red-500' : 'fas fa-volume-up fa-lg text-green-600';
+        }
+
+        function requestNotifPermission() { 
+            Notification.requestPermission().then(p => { if(p === "granted") { document.getElementById('notifPermissionBox').classList.add('hidden'); if(!isMuted) soundProses.play(); } }); 
+        }
 
         function triggerNotif(t, b, s) { 
-            if(s === "proses") { soundProses.play().catch(()=>{}); }
-            if(s === "jemput") {
-                let cnt = 0;
-                jemputInterval = setInterval(() => {
-                    soundJemput.play().catch(()=>{});
-                    cnt++; if(cnt >= 10) clearInterval(jemputInterval);
-                }, 1000);
+            if(!isMuted) {
+                if(s === "proses") soundProses.play().catch(()=>{});
+                if(s === "jemput") {
+                    let cnt = 0;
+                    jemputInterval = setInterval(() => {
+                        soundJemput.play().catch(()=>{});
+                        cnt++; if(cnt >= 10) clearInterval(jemputInterval);
+                    }, 1000);
+                }
             }
             if (Notification.permission === "granted") new Notification(t, { body: b, icon: "logo_kodpen.png" }); 
         }
 
-        function stopJemputAlarm() { clearInterval(jemputInterval); document.getElementById('btnStopJemput').innerText = "MENUNGGU STATUS SELESAI..."; document.getElementById('btnStopJemput').disabled = true; }
+        function stopJemputAlarm() {
+            clearInterval(jemputInterval);
+            document.getElementById('btnStopJemput').innerText = "SEGERA KE KASIR...";
+            document.getElementById('btnStopJemput').disabled = true;
+        }
 
         function qty(n,h,c) { if(!keranjang[n]) keranjang[n]={q:0,h:h}; keranjang[n].q+=c; if(keranjang[n].q<0) keranjang[n].q=0; document.getElementById('q-'+n.replace(/\s+/g,'')).innerText=keranjang[n].q; updateRingkasan(); localStorage.setItem('kodpen_keranjang', JSON.stringify(keranjang)); }
         
@@ -156,10 +171,10 @@
         }
 
         function valBtn() { 
-            const pay = document.querySelector('input[name="payment"]:checked').value;
+            const pay = document.querySelector('input[name="payment"]:checked').value; const btn = document.getElementById('btnPesan');
             document.getElementById('qrisSection').classList.toggle('hidden', pay !== 'QRIS');
-            if(pay==='Tunai'){ document.getElementById('uploadArea').classList.add('hidden'); document.getElementById('btnPesan').disabled=false; }
-            else { document.getElementById('uploadArea').classList.remove('hidden'); document.getElementById('btnPesan').disabled = document.getElementById('buktiFile').files.length === 0; } 
+            if(pay==='Tunai'){ document.getElementById('uploadArea').classList.add('hidden'); btn.disabled=false; }
+            else { document.getElementById('uploadArea').classList.remove('hidden'); btn.disabled = document.getElementById('buktiFile').files.length === 0; } 
         }
 
         async function kirimPesanan() {
@@ -181,7 +196,8 @@
                     if (status !== currentStatus) {
                         if (status === "Proses") triggerNotif("KODPEN COFFEE", "Pesanan Sedang Diproses! ☕", "proses");
                         else if (status === "Jemput") triggerNotif("KODPEN COFFEE", "PESANAN SIAP! Ambil di kasir 🔔", "jemput");
-                        else if (status === "Selesai") { clearInterval(jemputInterval); localStorage.clear(); alert("Selesai! Terima Kasih."); window.location.reload(); }
+                        else if (status === "Batal") triggerNotif("KODPEN COFFEE", "Maaf, pesanan dibatalkan ❌", "proses");
+                        else if (status === "Selesai") { clearInterval(jemputInterval); localStorage.clear(); alert("Selesai!"); window.location.reload(); }
                         updateUI(status, pay); currentStatus = status;
                     }
                 });
@@ -192,8 +208,8 @@
             const mT = document.getElementById('msgTunai'); const mP = document.getElementById('msgProses'); const mJ = document.getElementById('msgJemput'); const mB = document.getElementById('msgBatal');
             mT.classList.add('hidden'); mP.classList.add('hidden'); mJ.classList.add('hidden'); mB.classList.add('hidden');
             if(s === "Antri" && pay === "Tunai") mT.classList.remove('hidden');
-            if(s === "Proses") mP.classList.remove('hidden');
-            if(s === "Jemput") { mP.classList.remove('hidden'); mJ.classList.remove('hidden'); }
+            if(s === "Proses" || s === "Jemput") mP.classList.remove('hidden');
+            if(s === "Jemput") mJ.classList.remove('hidden');
             if(s === "Batal") mB.classList.remove('hidden');
         }
 
