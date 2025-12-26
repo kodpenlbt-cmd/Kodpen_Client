@@ -14,34 +14,39 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <nav class="bg-starbucks text-white p-4 sticky top-0 z-50 shadow-lg">
-        <h1 class="text-center font-bold text-lg">KODPEN COFFEE</h1>
+        <h1 class="text-center font-bold text-lg tracking-widest">KODPEN COFFEE</h1>
     </nav>
 
     <div class="container mx-auto px-4 py-6 max-w-md">
         <div class="mb-6 rounded-xl overflow-hidden shadow-lg border-4 border-starbucks">
-            <img src="ThisOurMenu.jpg" class="w-full" alt="Menu">
+            <img src="ThisOurMenu.jpg" class="w-full" alt="Menu Utama">
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
-            <select id="nomorMeja" class="w-full p-3 border rounded-lg">
+        <div class="bg-white p-5 rounded-xl shadow-md mb-6 border-l-8 border-starbucks">
+            <label class="block font-bold text-gray-700 mb-2">Pilih Nomor Meja Anda:</label>
+            <select id="nomorMeja" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-starbucks outline-none">
                 <option value="">-- Pilih Meja --</option>
             </select>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <h3 class="font-bold border-b pb-2 mb-4">Daftar Menu:</h3>
+        <div class="bg-white p-5 rounded-xl shadow-md mb-6">
+            <h3 class="font-bold border-b-2 border-starbucks pb-2 mb-4 text-gray-800">Daftar Pesanan:</h3>
             <div id="menu-container"></div>
         </div>
 
-        <div class="text-center py-6">
-            <h3 class="text-xl font-bold mb-4">Total: <span id="totalHarga">Rp 0</span></h3>
-            <button onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl">PESAN SEKARANG</button>
+        <div class="bg-white p-6 rounded-xl shadow-2xl text-center">
+            <h3 class="text-2xl font-black mb-4 text-gray-800">Total: <span id="totalHarga" class="text-starbucks">Rp 0</span></h3>
+            <button onclick="kirimPesanan()" id="btnPesan" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-lg hover:scale-105 transition-transform active:bg-green-900">
+                PESAN SEKARANG
+            </button>
         </div>
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbz9iL9Q2S3FXcN7SDw5an93qQOe5FvJSvJNdcfKVmvrB0X57oNk0M6MelHUlLGTYmkQZA/exec';
+        // MASUKKAN LINK WEB APP ANDA DI SINI
+        const scriptURL = 'PASTE_URL_WEB_APP_ANDA_DI_SINI'; 
+
+        const menuData = {
             "ICED COFFEE": [
                 {n: "Street Coffee", h: 15000}, {n: "Americano", h: 15000},
                 {n: "ButterStreet", h: 20000}, {n: "Aren Royale", h: 20000}, {n: "Pop Rock", h: 20000}
@@ -49,25 +54,32 @@
             "NON COFFEE": [
                 {n: "Chocolate", h: 18000}, {n: "Matcha", h: 18000}, {n: "Red Velvet", h: 18000}
             ],
-            "MANUAL BREW": [{n: "Hot Coffee Milk", h: 13000}]
+            "MANUAL BREW": [
+                {n: "Hot Coffee Milk", h: 13000}
+            ]
         };
 
         let keranjang = {};
+
+        // Inisialisasi Meja dan Menu
         document.addEventListener('DOMContentLoaded', () => {
             const select = document.getElementById('nomorMeja');
-            for(let i=1; i<=20; i++) select.innerHTML += `<option value="${i}">Meja ${i}</option>`;
+            for(let i=1; i<=20; i++) select.innerHTML += `<option value="${i}">Meja Nomor ${i}</option>`;
             
             const container = document.getElementById('menu-container');
             for(let cat in menuData) {
-                container.innerHTML += `<div class="font-bold text-starbucks mt-4 border-l-4 border-green-700 pl-2 text-sm">${cat}</div>`;
+                container.innerHTML += `<div class="font-bold text-starbucks mt-6 mb-2 border-l-4 border-green-700 pl-2 text-sm bg-green-50 py-1 uppercase">${cat}</div>`;
                 menuData[cat].forEach(item => {
                     container.innerHTML += `
-                        <div class="menu-item flex justify-between items-center">
-                            <div><p class="font-bold text-sm">${item.n}</p><p class="text-xs text-gray-500">Rp ${item.h.toLocaleString()}</p></div>
-                            <div class="flex items-center gap-2">
-                                <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 bg-gray-200 rounded-full">-</button>
-                                <span id="qty-${item.n.replace(/\s+/g, '')}" class="text-sm font-bold">0</span>
-                                <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 bg-starbucks text-white rounded-full">+</button>
+                        <div class="menu-item flex justify-between items-center px-2">
+                            <div>
+                                <p class="font-bold text-gray-800 text-sm">${item.n}</p>
+                                <p class="text-xs text-gray-500 italic">Rp ${item.h.toLocaleString('id-ID')}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 bg-gray-200 rounded-full font-bold">-</button>
+                                <span id="qty-${item.n.replace(/\s+/g, '')}" class="text-sm font-black w-4 text-center">0</span>
+                                <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 bg-starbucks text-white rounded-full font-bold">+</button>
                             </div>
                         </div>`;
                 });
@@ -77,20 +89,24 @@
         function updateQty(n, h, c) {
             if(!keranjang[n]) keranjang[n] = { q: 0, h: h };
             keranjang[n].q += c; if(keranjang[n].q < 0) keranjang[n].q = 0;
+            
             document.getElementById('qty-'+n.replace(/\s+/g, '')).innerText = keranjang[n].q;
-            let total = 0; for(let k in keranjang) total += keranjang[k].q * keranjang[k].h;
-            document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString();
+            
+            let total = 0;
+            for(let k in keranjang) total += keranjang[k].q * keranjang[k].h;
+            document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString('id-ID');
         }
 
         function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
-            if(!meja) return alert("Pilih Meja!");
-            let pesanan = ""; for(let k in keranjang) if(keranjang[k].q > 0) pesanan += `${k} (${keranjang[k].q}x), `;
-            if(!pesanan) return alert("Pilih Menu!");
+            const btn = document.getElementById('btnPesan');
             
-            fetch(scriptURL, { method: 'POST', body: JSON.stringify({meja, pesanan, pembayaran: 'Tunai', total: document.getElementById('totalHarga').innerText}) })
-            .then(() => alert("Pesanan Terkirim!")).catch(e => alert("Error: " + e));
-        }
-    </script>
-</body>
-</html>
+            if(!meja) return alert("Silakan pilih nomor meja dulu!");
+            
+            let pesananStr = "";
+            for(let k in keranjang) if(keranjang[k].q > 0) pesananStr += `${k} (${keranjang[k].q}x), `;
+            
+            if(!pesananStr) return alert("Pilih minimal satu menu!");
+
+            btn.disabled = true;
+            btn.innerText = "MENGIRIM...";
