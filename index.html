@@ -15,7 +15,6 @@
         @keyframes blinker { 50% { opacity: 0; } }
         .blink-notif { animation: blinker 0.8s linear infinite; }
         
-        /* Layout Struk Thermal 58mm */
         #receipt-area { 
             width: 58mm; padding: 10px; background: white; color: black; 
             font-family: 'Courier New', Courier, monospace; font-size: 11px; line-height: 1.2;
@@ -76,7 +75,6 @@
                     <input type="radio" name="payment" value="Tunai" onchange="valBtn()" class="mr-3" checked> Tunai (Kasir)
                 </label>
             </div>
-
             <div id="uploadArea" class="hidden p-4 bg-gray-50 rounded-lg border-2 border-dashed">
                 <p class="text-[10px] font-bold text-red-600 mb-2 uppercase">Wajib Upload Bukti Bayar!</p>
                 <input type="file" id="buktiFile" accept="image/*" onchange="valBtn()" class="text-xs mb-3 w-full">
@@ -137,19 +135,18 @@
         let lastOrder = {}; 
         let pollStatus; 
         let currentStatus = "";
-        const notifSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+        // DEFINISI SUARA BERBEDA
+        const soundProses = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); // Bell Ding
+        const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); // Digital Alert
 
         document.addEventListener('DOMContentLoaded', () => {
             const sel = document.getElementById('nomorMeja');
             for(let i=1; i<=20; i++) sel.innerHTML += `<option value="${i}">Meja ${i}</option>`;
-            
-            // Smart QR: Capture table number from URL
             const urlMeja = new URLSearchParams(window.location.search).get('meja');
             if(urlMeja) sel.value = urlMeja;
-
             if (Notification.permission !== "granted") document.getElementById('notifPermissionBox').classList.remove('hidden');
 
-            // Render Menus
             Object.keys(menuData).forEach(cat => {
                 const cont = document.getElementById('list-' + (cat==='iced'?'iced':cat==='non'?'non':'manual'));
                 menuData[cat].forEach(item => {
@@ -162,11 +159,18 @@
         });
 
         function requestNotifPermission() { 
-            Notification.requestPermission().then(p => { if(p === "granted") { document.getElementById('notifPermissionBox').classList.add('hidden'); notifSound.play(); } }); 
+            Notification.requestPermission().then(p => { 
+                if(p === "granted") { 
+                    document.getElementById('notifPermissionBox').classList.add('hidden'); 
+                    soundProses.play(); // Tes bunyi saat diaktifkan
+                } 
+            }); 
         }
 
-        function triggerNotif(title, body) { 
-            notifSound.play().catch(()=>{}); 
+        function triggerNotif(title, body, soundType) { 
+            if(soundType === "proses") soundProses.play().catch(()=>{});
+            if(soundType === "jemput") soundJemput.play().catch(()=>{});
+            
             if (Notification.permission === "granted") new Notification(title, { body: body, icon: "logo_kodpen.png" }); 
         }
 
@@ -228,7 +232,7 @@
             const meja = document.getElementById('nomorMeja').value;
             const fileInput = document.getElementById('buktiFile');
             let det = ""; Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) det += `${k} (x${keranjang[k].q}), `; });
-            if(!meja || !det) return alert("Lengkapi Meja & Menu!");
+            if(!meja || !det) return alert("Pilih Meja & Menu!");
             const btn = document.getElementById('btnPesan'); btn.innerText = "MENGIRIM..."; btn.disabled = true;
             const orderId = "ORD-" + new Date().getTime();
             let fileB64 = ""; if(fileInput.files.length > 0) { fileB64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result); reader.readAsDataURL(fileInput.files[0]); }); }
@@ -250,13 +254,19 @@
             pollStatus = setInterval(() => {
                 fetch(`${scriptURL}?orderId=${id}`).then(res => res.text()).then(status => {
                     if (status !== currentStatus) {
-                        if (status === "Proses") triggerNotif("KODPEN COFFEE", "Pesanan sedang diracik! ☕");
+                        if (status === "Proses") {
+                            triggerNotif("KODPEN COFFEE", "Pesanan sedang diracik! ☕", "proses");
+                        } 
                         else if (status === "Jemput") {
-                            let c = 0; let i = setInterval(() => { 
-                                triggerNotif("KODPEN COFFEE", "PESANAN SIAP! Ambil di kasir 🔔"); 
+                            let c = 0; 
+                            let i = setInterval(() => { 
+                                triggerNotif("KODPEN COFFEE", "PESANAN SIAP! Ambil di kasir 🔔", "jemput"); 
                                 c++; if(c>=3) clearInterval(i); 
                             }, 3000);
-                        } else if (status === "Batal") triggerNotif("KODPEN COFFEE", "Maaf, pesanan dibatalkan ❌");
+                        } 
+                        else if (status === "Batal") {
+                            triggerNotif("KODPEN COFFEE", "Maaf, pesanan dibatalkan ❌", "jemput"); // Bunyi alarm jemput untuk pembatalan agar terdengar
+                        }
                         else if (status === "Selesai") { localStorage.clear(); alert("Selesai!"); window.location.reload(); }
                         updateUI(status, pay); currentStatus = status;
                     }
