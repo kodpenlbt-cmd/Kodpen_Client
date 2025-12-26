@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KODPEN COFFEE - Order</title>
+    <title>KODPEN COFFEE - Order Menu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --sb-green: #00704A; }
         .dark-mode { background-color: #121212; color: #e0e0e0; }
+        .dark-mode .bg-white { background-color: #1f2937; color: #f3f4f6; }
         .bg-starbucks { background-color: var(--sb-green); }
         .text-starbucks { color: var(--sb-green); }
         body { transition: background 0.3s, color 0.3s; }
         .menu-category { border-left: 4px solid var(--sb-green); padding-left: 10px; margin-top: 20px; font-weight: 800; color: var(--sb-green); }
         .menu-item { border-bottom: 1px solid #eee; padding: 12px 0; }
-        .dark-mode .menu-item { border-bottom: 1px solid #333; }
+        .dark-mode .menu-item { border-bottom: 1px solid #374151; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -23,52 +24,52 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="font-bold text-lg tracking-wider">KODPEN COFFEE</h1>
             <button id="darkToggle" class="p-2 rounded-full hover:bg-green-700 transition">
-                <i class="fas fa-moon"></i>
+                <i id="themeIcon" class="fas fa-moon"></i>
             </button>
         </div>
     </nav>
 
     <div class="container mx-auto px-4 py-6 max-w-md">
         <div class="text-center mb-8">
-            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4" onerror="this.style.display='none'; alert('File logo_kodpen.png tidak ditemukan di folder Github Anda!')">
+            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4" onerror="this.src='https://via.placeholder.com/150?text=Logo+Kodpen'">
             <h2 class="text-2xl font-extrabold text-starbucks italic">"So Ba Kopi Bro?"</h2>
         </div>
 
         <div class="mb-8 rounded-xl shadow-lg border-4 border-starbucks overflow-hidden">
-            <img src="ThisOurMenu.jpg" alt="Menu" class="w-full" onerror="this.style.display='none'; alert('File ThisOurMenu.jpg tidak ditemukan di folder Github Anda!')">
+            <img src="ThisOurMenu.jpg" alt="Banner Menu" class="w-full" onerror="this.src='https://via.placeholder.com/400x300?text=Gambar+Menu+Kopi'">
         </div>
 
         <div class="space-y-6">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+            <div class="bg-white p-4 rounded-xl shadow">
                 <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
-                <select id="nomorMeja" class="w-full p-3 border rounded-lg dark:bg-gray-700">
+                <select id="nomorMeja" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
                     <option value="">-- Pilih Meja --</option>
                 </select>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+            <div class="bg-white p-4 rounded-xl shadow">
                 <label class="block font-bold mb-2 border-b pb-2">Daftar Menu:</label>
 
-                <div class="menu-category uppercase text-sm">Iced Coffee</div>
+                <div class="menu-category uppercase text-xs">Iced Coffee</div>
                 <div id="iced-coffee-list"></div>
 
-                <div class="menu-category uppercase text-sm">Non Coffee</div>
+                <div class="menu-category uppercase text-xs">Non Coffee</div>
                 <div id="non-coffee-list"></div>
 
-                <div class="menu-category uppercase text-sm">Manual Brew</div>
+                <div class="menu-category uppercase text-xs">Manual Brew</div>
                 <div id="manual-brew-list"></div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+            <div class="bg-white p-4 rounded-xl shadow">
                 <label class="block font-bold mb-4">Metode Pembayaran:</label>
                 <div class="space-y-2">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700">
                         <input type="radio" name="payment" value="Transfer" class="mr-3"> Transfer BNI
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700">
                         <input type="radio" name="payment" value="QRIS" class="mr-3"> QRIS (Barcode)
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700">
                         <input type="radio" name="payment" value="Tunai" class="mr-3"> Tunai (Kasir)
                     </label>
                 </div>
@@ -85,6 +86,7 @@
     </div>
 
     <script>
+        // Data 9 Menu Spesifik sesuai gambar
         const menuData = {
             iced: [
                 {n: "Street Coffee", h: 15000},
@@ -106,16 +108,23 @@
         let keranjang = {};
         let totalSeluruhnya = 0;
 
+        // Menunggu seluruh elemen HTML siap sebelum menjalankan skrip
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+            initThemes();
+            initPaymentOptions();
+        });
+
         function initApp() {
-            // Load Meja
+            // Generate 20 Meja
             const selectMeja = document.getElementById('nomorMeja');
             for(let i=1; i<=20; i++) {
                 let opt = document.createElement('option');
-                opt.value = i; opt.innerHTML = "Meja " + i;
+                opt.value = i; opt.innerText = "Meja " + i;
                 selectMeja.appendChild(opt);
             }
 
-            // Render Menu
+            // Render Menu ke Kategori masing-masing
             renderList('iced-coffee-list', menuData.iced);
             renderList('non-coffee-list', menuData.non);
             renderList('manual-brew-list', menuData.manual);
@@ -123,19 +132,23 @@
 
         function renderList(elementId, items) {
             const list = document.getElementById(elementId);
+            if(!list) return;
             items.forEach(item => {
-                list.innerHTML += `
-                    <div class="menu-item flex justify-between items-center">
-                        <div>
-                            <p class="font-bold">${item.n}</p>
-                            <p class="text-sm text-gray-500">Rp ${item.h.toLocaleString()}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
-                            <span id="qty-${item.n.replace(/\s+/g, '')}" class="font-bold">0</span>
-                            <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
-                        </div>
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "menu-item flex justify-between items-center";
+                // Menghapus spasi untuk ID agar aman di JavaScript
+                const safeId = item.n.replace(/\s+/g, '');
+                itemDiv.innerHTML = `
+                    <div>
+                        <p class="font-bold">${item.n}</p>
+                        <p class="text-sm text-gray-500">Rp ${item.h.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
+                        <span id="qty-${safeId}" class="font-bold">0</span>
+                        <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
                     </div>`;
+                list.appendChild(itemDiv);
             });
         }
 
@@ -144,52 +157,70 @@
             keranjang[nama].qty += change;
             if(keranjang[nama].qty < 0) keranjang[nama].qty = 0;
             
-            document.getElementById('qty-' + nama.replace(/\s+/g, '')).innerText = keranjang[nama].qty;
+            const safeId = nama.replace(/\s+/g, '');
+            document.getElementById('qty-' + safeId).innerText = keranjang[nama].qty;
             hitungTotal();
         }
 
         function hitungTotal() {
             totalSeluruhnya = 0;
             for(let m in keranjang) totalSeluruhnya += keranjang[m].qty * keranjang[m].harga;
-            document.getElementById('totalHarga').innerText = "Rp " + totalSeluruhnya.toLocaleString();
+            document.getElementById('totalHarga').innerText = "Rp " + totalSeluruhnya.toLocaleString('id-ID');
         }
 
-        document.querySelectorAll('input[name="payment"]').forEach(el => {
-            el.addEventListener('change', (e) => {
-                const info = document.getElementById('payInfo');
-                info.classList.remove('hidden');
-                if(e.target.value === 'Transfer') {
-                    info.innerHTML = `<strong>BNI:</strong> 0388924011<br>a.n FAZRIN HARUN`;
-                } else if(e.target.value === 'QRIS') {
-                    // Pastikan file Barcode.png ada di Github
-                    info.innerHTML = `<img src="Barcode.png" class="w-full rounded-lg shadow-sm" onerror="alert('File Barcode.png tidak ditemukan!')">`;
-                } else {
-                    info.innerHTML = `<p class="text-red-500 font-bold uppercase">Silahkan melakukan pembayaran Di Kasir!!!</p>`;
-                }
+        function initThemes() {
+            const toggle = document.getElementById('darkToggle');
+            const icon = document.getElementById('themeIcon');
+            toggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                icon.classList.toggle('fa-moon');
+                icon.classList.toggle('fa-sun');
             });
-        });
+        }
 
-        document.getElementById('darkToggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-        });
+        function initPaymentOptions() {
+            document.querySelectorAll('input[name="payment"]').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    const info = document.getElementById('payInfo');
+                    info.classList.remove('hidden');
+                    if(e.target.value === 'Transfer') {
+                        info.innerHTML = `<strong>BNI:</strong> 0388924011<br>a.n FAZRIN HARUN`;
+                    } else if(e.target.value === 'QRIS') {
+                        info.innerHTML = `<img src="Barcode.png" class="w-full rounded-lg shadow-sm" onerror="this.src='https://via.placeholder.com/200?text=Scan+QRIS+Di+Sini'">`;
+                    } else {
+                        info.innerHTML = `<p class="text-red-500 font-bold uppercase">SILAHKAN MELAKUKAN PEMBAYARAN DI KASIR!!!</p>`;
+                    }
+                });
+            });
+        }
 
         async function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
             const bayar = document.querySelector('input[name="payment"]:checked')?.value;
-            if(!meja || !bayar || totalSeluruhnya === 0) return alert("Lengkapi Meja, Menu, dan Pembayaran!");
+            if(!meja || !bayar || totalSeluruhnya === 0) return alert("Mohon lengkapi Meja, Menu, dan Pembayaran!");
 
             let detailOrder = "";
-            for(let m in keranjang) { if(keranjang[m].qty > 0) detailOrder += `${m} (${keranjang[m].qty}x), `; }
+            for(let m in keranjang) { 
+                if(keranjang[m].qty > 0) detailOrder += `${m} (${keranjang[m].qty}x), `; 
+            }
 
-            const scriptURL = https://script.google.com/macros/s/AKfycbwtoc09ummTI6O0MtOLl7ZghSwJVU9kRQqi0WQ1S_zbq7J-YXiS2TIR5f97LfZW9-cN/exec
+            // --- MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI ---
+            const scriptURL = 'URL_WEB_APP_SERVER_KODPEN_ANDA'; 
             
-            alert("Pesanan sedang dikirim...");
-            fetch(scriptURL, { method: 'POST', body: JSON.stringify({meja, pesanan: detailOrder, pembayaran: bayar, total: "Rp "+totalSeluruhnya.toLocaleString()}) })
-            .then(() => alert("Pesanan Berhasil!"))
-            .catch(() => alert("Gagal konek ke server, pastikan URL Script sudah benar."));
+            alert("Pesanan sedang dikirim ke barista...");
+            
+            fetch(scriptURL, { 
+                method: 'POST', 
+                body: JSON.stringify({
+                    meja, 
+                    pesanan: detailOrder, 
+                    pembayaran: bayar, 
+                    total: "Rp " + totalSeluruhnya.toLocaleString('id-ID')
+                }) 
+            })
+            .then(() => alert("Pesanan Berhasil dikirim! Mohon tunggu di meja Anda."))
+            .catch(() => alert("Koneksi gagal. Pastikan Anda sudah mengganti URL Script di kode index.html."));
         }
-
-        initApp();
     </script>
 </body>
 </html>
