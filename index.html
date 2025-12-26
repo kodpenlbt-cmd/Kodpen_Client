@@ -12,6 +12,7 @@
         .bg-starbucks { background-color: var(--sb-green); }
         .text-starbucks { color: var(--sb-green); }
         body { transition: background 0.3s, color 0.3s; }
+        .menu-category { border-left: 4px solid var(--sb-green); padding-left: 10px; margin-top: 20px; font-weight: 800; color: var(--sb-green); }
         .menu-item { border-bottom: 1px solid #eee; padding: 12px 0; }
         .dark-mode .menu-item { border-bottom: 1px solid #333; }
     </style>
@@ -29,12 +30,12 @@
 
     <div class="container mx-auto px-4 py-6 max-w-md">
         <div class="text-center mb-8">
-            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4">
+            <img src="logo_kodpen.png" alt="Logo Kodpen" class="mx-auto w-32 mb-4" onerror="this.style.display='none'; alert('File logo_kodpen.png tidak ditemukan di folder Github Anda!')">
             <h2 class="text-2xl font-extrabold text-starbucks italic">"So Ba Kopi Bro?"</h2>
         </div>
 
         <div class="mb-8 rounded-xl shadow-lg border-4 border-starbucks overflow-hidden">
-            <img src="ThisOurMenu.jpg" alt="Menu" class="w-full">
+            <img src="ThisOurMenu.jpg" alt="Menu" class="w-full" onerror="this.style.display='none'; alert('File ThisOurMenu.jpg tidak ditemukan di folder Github Anda!')">
         </div>
 
         <div class="space-y-6">
@@ -42,59 +43,32 @@
                 <label class="block font-bold mb-2">Pilih Nomor Meja:</label>
                 <select id="nomorMeja" class="w-full p-3 border rounded-lg dark:bg-gray-700">
                     <option value="">-- Pilih Meja --</option>
-                    </select>
+                </select>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-                <label class="block font-bold mb-4 border-b pb-2">Daftar Menu:</label>
-                
-                <div class="menu-item flex justify-between items-center">
-                    <div>
-                        <p class="font-bold">Kopi Susu Aren</p>
-                        <p class="text-sm text-gray-500">Rp 15.000</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="updateQty('Kopi Susu Aren', 15000, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
-                        <span id="qty-Kopi Susu Aren" class="font-bold">0</span>
-                        <button onclick="updateQty('Kopi Susu Aren', 15000, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
-                    </div>
-                </div>
+                <label class="block font-bold mb-2 border-b pb-2">Daftar Menu:</label>
 
-                <div class="menu-item flex justify-between items-center">
-                    <div>
-                        <p class="font-bold">Americano</p>
-                        <p class="text-sm text-gray-500">Rp 12.000</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="updateQty('Americano', 12000, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
-                        <span id="qty-Americano" class="font-bold">0</span>
-                        <button onclick="updateQty('Americano', 12000, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
-                    </div>
-                </div>
+                <div class="menu-category uppercase text-sm">Iced Coffee</div>
+                <div id="iced-coffee-list"></div>
 
-                <div class="menu-item flex justify-between items-center">
-                    <div>
-                        <p class="font-bold">Mendoan Panas</p>
-                        <p class="text-sm text-gray-500">Rp 10.000</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="updateQty('Mendoan Panas', 10000, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
-                        <span id="qty-Mendoan Panas" class="font-bold">0</span>
-                        <button onclick="updateQty('Mendoan Panas', 10000, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
-                    </div>
-                </div>
+                <div class="menu-category uppercase text-sm">Non Coffee</div>
+                <div id="non-coffee-list"></div>
+
+                <div class="menu-category uppercase text-sm">Manual Brew</div>
+                <div id="manual-brew-list"></div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
                 <label class="block font-bold mb-4">Metode Pembayaran:</label>
                 <div class="space-y-2">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
                         <input type="radio" name="payment" value="Transfer" class="mr-3"> Transfer BNI
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
                         <input type="radio" name="payment" value="QRIS" class="mr-3"> QRIS (Barcode)
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
                         <input type="radio" name="payment" value="Tunai" class="mr-3"> Tunai (Kasir)
                     </label>
                 </div>
@@ -103,7 +77,7 @@
 
             <div class="text-center py-6">
                 <div class="text-xl font-bold mb-4">Total: <span id="totalHarga">Rp 0</span></div>
-                <button onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl">
+                <button onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition">
                     PESAN SEKARANG
                 </button>
             </div>
@@ -111,15 +85,58 @@
     </div>
 
     <script>
+        const menuData = {
+            iced: [
+                {n: "Street Coffee", h: 15000},
+                {n: "Americano", h: 15000},
+                {n: "ButterStreet", h: 20000},
+                {n: "Aren Royale", h: 20000},
+                {n: "Pop Rock", h: 20000}
+            ],
+            non: [
+                {n: "Chocolate", h: 18000},
+                {n: "Matcha", h: 18000},
+                {n: "Red Velvet", h: 18000}
+            ],
+            manual: [
+                {n: "Hot Coffee Milk", h: 13000}
+            ]
+        };
+
         let keranjang = {};
         let totalSeluruhnya = 0;
 
-        // Load Meja 1-20
-        const selectMeja = document.getElementById('nomorMeja');
-        for(let i=1; i<=20; i++) {
-            let opt = document.createElement('option');
-            opt.value = i; opt.innerHTML = "Meja " + i;
-            selectMeja.appendChild(opt);
+        function initApp() {
+            // Load Meja
+            const selectMeja = document.getElementById('nomorMeja');
+            for(let i=1; i<=20; i++) {
+                let opt = document.createElement('option');
+                opt.value = i; opt.innerHTML = "Meja " + i;
+                selectMeja.appendChild(opt);
+            }
+
+            // Render Menu
+            renderList('iced-coffee-list', menuData.iced);
+            renderList('non-coffee-list', menuData.non);
+            renderList('manual-brew-list', menuData.manual);
+        }
+
+        function renderList(elementId, items) {
+            const list = document.getElementById(elementId);
+            items.forEach(item => {
+                list.innerHTML += `
+                    <div class="menu-item flex justify-between items-center">
+                        <div>
+                            <p class="font-bold">${item.n}</p>
+                            <p class="text-sm text-gray-500">Rp ${item.h.toLocaleString()}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="updateQty('${item.n}', ${item.h}, -1)" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600">-</button>
+                            <span id="qty-${item.n.replace(/\s+/g, '')}" class="font-bold">0</span>
+                            <button onclick="updateQty('${item.n}', ${item.h}, 1)" class="w-8 h-8 rounded-full bg-starbucks text-white">+</button>
+                        </div>
+                    </div>`;
+            });
         }
 
         function updateQty(nama, harga, change) {
@@ -127,19 +144,16 @@
             keranjang[nama].qty += change;
             if(keranjang[nama].qty < 0) keranjang[nama].qty = 0;
             
-            document.getElementById('qty-' + nama).innerText = keranjang[nama].qty;
+            document.getElementById('qty-' + nama.replace(/\s+/g, '')).innerText = keranjang[nama].qty;
             hitungTotal();
         }
 
         function hitungTotal() {
             totalSeluruhnya = 0;
-            for(let menu in keranjang) {
-                totalSeluruhnya += keranjang[menu].qty * keranjang[menu].harga;
-            }
+            for(let m in keranjang) totalSeluruhnya += keranjang[m].qty * keranjang[m].harga;
             document.getElementById('totalHarga').innerText = "Rp " + totalSeluruhnya.toLocaleString();
         }
 
-        // Event Listener Pembayaran
         document.querySelectorAll('input[name="payment"]').forEach(el => {
             el.addEventListener('change', (e) => {
                 const info = document.getElementById('payInfo');
@@ -147,9 +161,10 @@
                 if(e.target.value === 'Transfer') {
                     info.innerHTML = `<strong>BNI:</strong> 0388924011<br>a.n FAZRIN HARUN`;
                 } else if(e.target.value === 'QRIS') {
-                    info.innerHTML = `<img src="Barcode.png" class="w-full rounded-lg shadow-sm">`;
+                    // Pastikan file Barcode.png ada di Github
+                    info.innerHTML = `<img src="Barcode.png" class="w-full rounded-lg shadow-sm" onerror="alert('File Barcode.png tidak ditemukan!')">`;
                 } else {
-                    info.innerHTML = `<p class="text-red-500 font-bold">SILAHKAN MELAKUKAN PEMBAYARAN DI KASIR!!!</p>`;
+                    info.innerHTML = `<p class="text-red-500 font-bold uppercase">Silahkan melakukan pembayaran Di Kasir!!!</p>`;
                 }
             });
         });
@@ -161,34 +176,20 @@
         async function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
             const bayar = document.querySelector('input[name="payment"]:checked')?.value;
-            
-            if(!meja || !bayar || totalSeluruhnya === 0) {
-                return alert("Mohon pilih Meja, Menu, dan Metode Pembayaran!");
-            }
+            if(!meja || !bayar || totalSeluruhnya === 0) return alert("Lengkapi Meja, Menu, dan Pembayaran!");
 
             let detailOrder = "";
-            for(let menu in keranjang) {
-                if(keranjang[menu].qty > 0) {
-                    detailOrder += `${menu} (${keranjang[menu].qty}x), `;
-                }
-            }
+            for(let m in keranjang) { if(keranjang[m].qty > 0) detailOrder += `${m} (${keranjang[m].qty}x), `; }
 
-            const data = {
-                meja: meja,
-                pesanan: detailOrder,
-                pembayaran: bayar,
-                total: "Rp " + totalSeluruhnya.toLocaleString()
-            };
-
-            // GANTI DENGAN URL GOOGLE SCRIPT ANDA
             const scriptURL = https://script.google.com/macros/s/AKfycbwtoc09ummTI6O0MtOLl7ZghSwJVU9kRQqi0WQ1S_zbq7J-YXiS2TIR5f97LfZW9-cN/exec
-
-            alert("Pesanan sedang diproses...");
             
-            fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) })
-            .then(res => alert("Pesanan Berhasil dikirim!"))
-            .catch(err => alert("Terjadi kesalahan, tapi data tersimpan di log."));
+            alert("Pesanan sedang dikirim...");
+            fetch(scriptURL, { method: 'POST', body: JSON.stringify({meja, pesanan: detailOrder, pembayaran: bayar, total: "Rp "+totalSeluruhnya.toLocaleString()}) })
+            .then(() => alert("Pesanan Berhasil!"))
+            .catch(() => alert("Gagal konek ke server, pastikan URL Script sudah benar."));
         }
+
+        initApp();
     </script>
 </body>
 </html>
