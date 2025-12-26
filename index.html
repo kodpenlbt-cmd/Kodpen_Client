@@ -18,7 +18,6 @@
         .menu-item { border-bottom: 1px solid #eee; padding: 12px 0; }
         .dark-mode .menu-item { border-bottom: 1px solid #374151; }
         
-        /* Gaya Nota Thermal 58mm */
         #receipt-area { 
             width: 58mm; 
             padding: 10px; 
@@ -84,11 +83,16 @@
                     </label>
                 </div>
                 <div id="payInfo" class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg hidden text-sm"></div>
+                
+                <div id="uploadSection" class="mt-4 p-4 border-2 border-dashed border-gray-300 rounded-lg hidden">
+                    <label class="block font-bold mb-2 text-xs uppercase text-gray-500">Upload Bukti Pembayaran:</label>
+                    <input type="file" id="fileBukti" accept="image/*" class="w-full text-xs text-gray-500">
+                </div>
             </div>
 
             <div class="text-center py-6">
                 <div class="text-xl font-bold mb-4">Total: <span id="totalHarga">Rp 0</span></div>
-                <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition">
+                <button id="btnPesan" onclick="handlePesan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition">
                     PESAN SEKARANG
                 </button>
                 <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl animate-bounce">
@@ -158,7 +162,15 @@
             document.querySelectorAll('input[name="payment"]').forEach(el => {
                 el.addEventListener('change', (e) => {
                     const info = document.getElementById('payInfo');
+                    const uploadSection = document.getElementById('uploadSection');
                     info.classList.remove('hidden');
+                    
+                    if(e.target.value === 'Transfer BNI' || e.target.value === 'QRIS') {
+                        uploadSection.classList.remove('hidden');
+                    } else {
+                        uploadSection.classList.add('hidden');
+                    }
+
                     if(e.target.value === 'Transfer BNI') {
                         info.innerHTML = `<strong>BNI:</strong> 0388924011<br>a.n FAZRIN HARUN`;
                     } else if(e.target.value === 'QRIS') {
@@ -205,10 +217,31 @@
             document.getElementById('totalHarga').innerText = "Rp " + totalSeluruhnya.toLocaleString('id-ID');
         }
 
-        async function kirimPesanan() {
+        // FUNGSI UNTUK MENGUBAH FILE MENJADI TEXT (BASE64) AGAR BISA DIKIRIM KE GOOGLE SHEETS
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function handlePesan() {
             const meja = document.getElementById('nomorMeja').value;
             const bayar = document.querySelector('input[name="payment"]:checked')?.value;
+            const fileInput = document.getElementById('fileBukti');
+            
             if(!meja || !bayar || totalSeluruhnya === 0) return alert("Mohon lengkapi Meja, Menu, dan Pembayaran!");
+
+            // Validasi upload bukti jika non-tunai
+            let fileData = "";
+            let fileName = "";
+            if(bayar !== 'Tunai') {
+                if(fileInput.files.length === 0) return alert("Mohon upload bukti pembayaran Anda!");
+                fileData = await getBase64(fileInput.files[0]);
+                fileName = fileInput.files[0].name;
+            }
 
             let detailOrder = "";
             let listStruk = "";
@@ -224,7 +257,18 @@
             const scriptURL = 'https://script.google.com/macros/s/AKfycbyY7QZn5_-wCrjbzLk2lRaVQxO_DSMFzFvl5zkZgBSg9qlU3eVG_vxE-p3KpktI-_D4/exec';
             
             alert("Pesanan sedang dikirim ke barista...");
-            fetch(scriptURL, { method: 'POST', body: JSON.stringify({ meja, pesanan: detailOrder, pembayaran: bayar, total: lastOrderData.total }) })
+            
+            fetch(scriptURL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    meja, 
+                    pesanan: detailOrder, 
+                    pembayaran: bayar, 
+                    total: lastOrderData.total,
+                    fileBase64: fileData,  // Data file dikirim di sini
+                    fileName: fileName     // Nama file dikirim di sini
+                }) 
+            })
             .then(() => {
                 alert("Pesanan Berhasil! Silakan klik tombol MY BILL untuk melihat nota.");
                 document.getElementById('btnPesan').classList.add('hidden');
