@@ -17,7 +17,6 @@
         #receipt-area { width: 58mm; padding: 10px; background: white; color: black; font-family: monospace; font-size: 11px; line-height: 1.2; }
         .receipt-hidden { position: absolute; left: -9999px; top: 0; }
         
-        /* Gaya tambahan untuk tombol mati/buram */
         #btnPesan:disabled {
             opacity: 0.4;
             cursor: not-allowed;
@@ -44,7 +43,7 @@
         <div class="bg-white p-4 rounded-xl shadow mb-6">
             <div class="flex justify-between items-center mb-4">
                 <label class="font-bold text-sm">Nomor Meja:</label>
-                <button id="muteBtn" onclick="toggleMute()" class="text-starbucks bg-gray-100 p-2 rounded-full">
+                <button id="muteBtn" onclick="toggleMute()" class="text-starbucks bg-gray-100 p-2 rounded-full ring-2 ring-starbucks">
                     <i id="muteIcon" class="fas fa-volume-up fa-lg"></i>
                 </button>
             </div>
@@ -62,23 +61,31 @@
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <div class="space-y-3 mb-4">
-                <label class="flex items-center p-3 border rounded-lg cursor-pointer">
-                    <input type="radio" name="payment" value="Transfer BNI" onchange="valBtn()" class="mr-3"> 
-                    <div class="flex flex-col"><span class="font-bold">Transfer BNI</span><span class="text-[10px] text-blue-600">No. Rek: 123456789</span></div>
+            <div class="space-y-4 mb-4">
+                <label class="flex items-start p-3 border-2 border-blue-100 rounded-lg cursor-pointer bg-blue-50/30">
+                    <input type="radio" name="payment" value="Transfer BNI" onchange="valBtn()" class="mt-1 mr-3"> 
+                    <div class="flex flex-col">
+                        <span class="font-black text-blue-800 text-base leading-tight">BANK BNI (bank negara indonesia)</span>
+                        <span class="text-blue-700 font-extrabold text-lg tracking-wider">0388924011</span>
+                        <span class="text-blue-900 font-bold text-sm uppercase">A.n FAZRIN HARUN</span>
+                    </div>
                 </label>
+
                 <label class="flex items-center p-3 border rounded-lg cursor-pointer">
-                    <input type="radio" name="payment" value="QRIS" onchange="valBtn()" class="mr-3"> QRIS (Scan Barcode)
+                    <input type="radio" name="payment" value="QRIS" onchange="valBtn()" class="mr-3"> 
+                    <span class="font-bold text-gray-700">QRIS (Scan Barcode)</span>
                 </label>
+
                 <label class="flex items-center p-3 border rounded-lg cursor-pointer">
-                    <input type="radio" name="payment" value="Tunai" onchange="valBtn()" class="mr-3" checked> Tunai (Kasir)
+                    <input type="radio" name="payment" value="Tunai" onchange="valBtn()" class="mr-3" checked> 
+                    <span class="font-bold text-gray-700">Tunai (Bayar di Kasir)</span>
                 </label>
             </div>
             
             <div id="uploadArea" class="hidden p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div id="qrisSection" class="hidden text-center mb-4">
                     <img id="qrisImg" src="Barcode.png" class="w-48 mx-auto rounded shadow border-2 border-starbucks mb-2">
-                    <button onclick="downloadQR()" class="text-[10px] bg-gray-200 px-3 py-1 rounded-full font-bold uppercase mb-4 hover:bg-gray-300">
+                    <button onclick="downloadQR()" class="text-[10px] bg-gray-200 px-3 py-1 rounded-full font-bold uppercase mb-4">
                         <i class="fas fa-download mr-1"></i> Simpan QR Code
                     </button>
                 </div>
@@ -87,31 +94,42 @@
             </div>
         </div>
 
-        <div class="text-center py-6 bg-white rounded-xl shadow-2xl px-4 sticky bottom-4">
+        <div class="text-center py-6 bg-white rounded-xl shadow-2xl px-4 sticky bottom-4 border-t-2 border-gray-100">
             <div id="statusContainer" class="hidden mb-4 space-y-2">
-                <div id="msgTunai" class="hidden p-3 bg-red-100 border border-red-500 rounded-lg text-red-700 text-[10px] font-bold uppercase leading-tight">⚠️ BAYAR DI KASIR AGAR PESANAN DIPROSES!</div>
-                <div id="msgProses" class="hidden p-3 bg-green-600 border-2 border-white rounded-lg text-white text-sm font-black blink-notif uppercase shadow-lg">☕ PESANAN SEDANG DIPROSES!</div>
-                <div id="msgJemput" class="hidden p-4 bg-blue-600 border-2 border-white rounded-xl text-white shadow-2xl">
-                    <p class="text-lg font-black blink-notif uppercase mb-3">🔔 PESANAN SIAP!</p>
-                    <button id="btnStopJemput" onclick="stopJemputAlarm()" class="w-full bg-white text-blue-600 py-3 rounded-lg font-black text-sm uppercase">SAYA MENJEMPUT</button>
+                
+                <div id="msgTunai" class="hidden p-3 bg-red-100 border-2 border-red-600 rounded-lg text-red-700 text-xs font-black blink-notif uppercase leading-tight">
+                    segera lakukan pembayaran di kasir agar pesanan anda di proses.
                 </div>
+
+                <div id="msgProses" class="hidden p-3 bg-green-600 border-2 border-white rounded-lg text-white text-xs font-black blink-notif uppercase shadow-lg">
+                    PESANAN ANDA DI PROSES, HARAP DI TUNGGU!!
+                </div>
+
+                <div id="msgJemput" class="hidden p-4 bg-blue-600 border-2 border-white rounded-xl text-white shadow-2xl">
+                    <p class="text-xs font-black blink-notif uppercase mb-3 leading-snug">
+                        PESANAN ANDA SELESAI DI PROSES DAN AKAN SEGERA DI ANTAR ATAU JIKA ANDA BERKENAN MENJEMPUT DI MEJA KASIR!
+                    </p>
+                    <button id="btnStopJemput" onclick="stopJemputAlarm()" class="w-full bg-white text-blue-600 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">MATIKAN ALARM / SAYA MENJEMPUT</button>
+                </div>
+
                 <div id="msgBatal" class="hidden p-3 bg-gray-900 text-white rounded-lg text-[10px] font-bold uppercase">❌ PESANAN DIBATALKAN</div>
             </div>
 
             <div class="text-xl font-bold mb-4 border-t pt-2 text-gray-800">Total: <span id="totalHarga" class="text-starbucks text-2xl font-black">Rp 0</span></div>
-            <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition uppercase">PESAN SEKARANG</button>
-            <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl uppercase text-xs">MY BILL (NOTA)</button>
+            
+            <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition uppercase tracking-widest">PESAN SEKARANG</button>
+            
+            <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl uppercase text-xs">MY BILL (LIHAT NOTA)</button>
         </div>
     </div>
+
     <div class="receipt-hidden"><div id="receipt-area"></div></div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwedrT_TZookmjbAmsr4KxQhsM_sIWY0Dchf5z1WdZkaLQ184MQAsZR5BjYDxQMPggI4w/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzmFG5VBjx9_dIfFpKfXKZ1WT-Kxfa3J2yGFqP236uxQ6R8wiwN0mLQenyPZaFLSKfT4A/exec';
         const menuData = { iced:[{n:"Street Coffee", h:15000},{n:"Americano", h:15000},{n:"ButterStreet", h:20000},{n:"Aren Royale", h:20000},{n:"Pop Rock", h:20000}], non:[{n:"Chocolate", h:18000},{n:"Matcha", h:18000},{n:"Red Velvet", h:18000}], manual:[{n:"Hot Coffee Milk", h:13000}] };
         
         let keranjang = {}; let pollStatus; let currentStatus = ""; let jemputInterval; let isMuted = false;
-        
-        // FITUR BARU: Audio Jemput Diganti (lebih jelas)
         const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -132,37 +150,45 @@
             valBtn();
         });
 
+        // Toggle Mute: Mempengaruhi semua suara termasuk alarm jemput
         function toggleMute() {
             isMuted = !isMuted;
-            document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute fa-lg text-red-500' : 'fas fa-volume-up fa-lg text-green-600';
+            const icon = document.getElementById('muteIcon');
+            if(isMuted) {
+                icon.className = 'fas fa-volume-mute fa-lg text-red-500';
+                clearInterval(jemputInterval); // Langsung hentikan jika sedang bunyi
+            } else {
+                icon.className = 'fas fa-volume-up fa-lg text-green-600';
+            }
         }
 
         function requestNotifPermission() { 
-            Notification.requestPermission().then(p => { if(p === "granted") { document.getElementById('notifPermissionBox').classList.add('hidden'); } }); 
+            Notification.requestPermission().then(p => { if(p === "granted") document.getElementById('notifPermissionBox').classList.add('hidden'); }); 
         }
 
-        // FITUR BARU: Logika Suara Disesuaikan (Suara Proses Dihilangkan)
         function triggerNotif(t, b, s) { 
-            if(!isMuted) {
-                if(s === "jemput") {
-                    let cnt = 0;
-                    jemputInterval = setInterval(() => {
+            // Cek apakah muted aktif sebelum memutar suara jemput
+            if(!isMuted && s === "jemput") {
+                let cnt = 0;
+                clearInterval(jemputInterval); // Bersihkan interval sebelumnya
+                jemputInterval = setInterval(() => {
+                    if(!isMuted) {
                         soundJemput.play().catch(()=>{});
-                        cnt++; if(cnt >= 5) clearInterval(jemputInterval); // Diulang 5x agar jelas
-                    }, 1500);
-                }
-                // Logika soundProses.play() untuk status "proses" sengaja tidak ada di sini
+                        cnt++; if(cnt >= 15) clearInterval(jemputInterval);
+                    } else {
+                        clearInterval(jemputInterval);
+                    }
+                }, 1500);
             }
             if (Notification.permission === "granted") new Notification(t, { body: b, icon: "logo_kodpen.png" }); 
         }
 
         function stopJemputAlarm() {
             clearInterval(jemputInterval);
-            document.getElementById('btnStopJemput').innerText = "SEGERA KE KASIR...";
-            document.getElementById('btnStopJemput').disabled = true;
+            document.getElementById('msgJemput').classList.remove('shadow-2xl');
+            document.getElementById('btnStopJemput').innerText = "MENUNGGU BARISTA...";
         }
 
-        // FITUR BARU: Tombol Download QRIS
         function downloadQR() {
             const link = document.createElement('a');
             link.href = document.getElementById('qrisImg').src;
@@ -184,26 +210,24 @@
             if(savedID && savedData) {
                 lastOrder = JSON.parse(savedData);
                 fetch(`${scriptURL}?orderId=${savedID}`).then(r => r.text()).then(status => {
-                    if (status !== "Selesai" && status !== "NotFound") { document.getElementById('btnPesan').classList.add('hidden'); document.getElementById('btnMyBill').classList.remove('hidden'); startPolling(savedID, lastOrder.pembayaran, status); } 
-                    else { localStorage.clear(); }
+                    if (status !== "Selesai" && status !== "NotFound") { 
+                        document.getElementById('btnPesan').classList.add('hidden'); 
+                        document.getElementById('btnMyBill').classList.remove('hidden'); 
+                        startPolling(savedID, lastOrder.pembayaran, status); 
+                    } else { localStorage.clear(); }
                 });
             }
         }
 
-        // FITUR BARU: Logika Validasi Tombol (Disabled & Blur)
         function valBtn() { 
             const pay = document.querySelector('input[name="payment"]:checked').value; 
             const btn = document.getElementById('btnPesan');
             const fileInput = document.getElementById('buktiFile');
-            
             document.getElementById('qrisSection').classList.toggle('hidden', pay !== 'QRIS');
-            
             if(pay === 'Tunai'){ 
-                document.getElementById('uploadArea').classList.add('hidden'); 
-                btn.disabled = false; 
+                document.getElementById('uploadArea').classList.add('hidden'); btn.disabled = false; 
             } else { 
                 document.getElementById('uploadArea').classList.remove('hidden'); 
-                // Tombol mati jika tidak ada file yang dipilih
                 btn.disabled = (fileInput.files.length === 0); 
             } 
         }
@@ -226,21 +250,28 @@
                 fetch(`${scriptURL}?orderId=${id}`).then(res => res.text()).then(status => {
                     if (status !== currentStatus) {
                         if (status === "Proses") triggerNotif("KODPEN COFFEE", "Pesanan Sedang Diproses! ☕", "proses");
-                        else if (status === "Jemput") triggerNotif("KODPEN COFFEE", "PESANAN SIAP! Ambil di kasir 🔔", "jemput");
-                        else if (status === "Batal") triggerNotif("KODPEN COFFEE", "Maaf, pesanan dibatalkan ❌", "batal");
-                        else if (status === "Selesai") { clearInterval(jemputInterval); localStorage.clear(); alert("Selesai!"); window.location.reload(); }
+                        else if (status === "Jemput") triggerNotif("KODPEN COFFEE", "SIAP DIJEMPUT! 🔔", "jemput");
+                        else if (status === "Selesai") { clearInterval(jemputInterval); localStorage.clear(); window.location.reload(); }
                         updateUI(status, pay); currentStatus = status;
                     }
                 });
-            }, 5000); // Polling lebih cepat (5 detik) agar update lancar
+            }, 4000);
         }
 
         function updateUI(s, pay) {
             const mT = document.getElementById('msgTunai'); const mP = document.getElementById('msgProses'); const mJ = document.getElementById('msgJemput'); const mB = document.getElementById('msgBatal');
             mT.classList.add('hidden'); mP.classList.add('hidden'); mJ.classList.add('hidden'); mB.classList.add('hidden');
+            
+            // Logika Sesuai Permintaan:
+            // 1. Antri & Tunai -> Merah Berkedip
             if(s === "Antri" && pay === "Tunai") mT.classList.remove('hidden');
-            if(s === "Proses" || s === "Jemput") mP.classList.remove('hidden');
+            
+            // 2. Proses -> Hijau Berkedip (Berlaku semua metode bayar)
+            if(s === "Proses") mP.classList.remove('hidden');
+            
+            // 3. Jemput -> Biru Berkedip (Berlaku semua metode bayar)
             if(s === "Jemput") mJ.classList.remove('hidden');
+            
             if(s === "Batal") mB.classList.remove('hidden');
         }
 
