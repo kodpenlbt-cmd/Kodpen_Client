@@ -14,26 +14,34 @@
         .menu-item { border-bottom: 1px solid #eee; padding: 12px 0; }
         @keyframes blinker { 50% { opacity: 0; } }
         .blink-notif { animation: blinker 0.8s linear infinite; }
-        #receipt-area { width: 58mm; padding: 10px; background: white; color: black; font-family: monospace; font-size: 11px; }
+        
+        /* Layout Struk Thermal 58mm */
+        #receipt-area { 
+            width: 58mm; padding: 10px; background: white; color: black; 
+            font-family: 'Courier New', Courier, monospace; font-size: 11px; line-height: 1.2;
+        }
         .receipt-hidden { position: absolute; left: -9999px; top: 0; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
-    <nav class="bg-starbucks text-white p-4 sticky top-0 z-50 shadow-lg text-center font-bold tracking-widest uppercase">KODPEN COFFEE</nav>
+
+    <nav class="bg-starbucks text-white p-4 sticky top-0 z-50 shadow-lg text-center font-bold tracking-widest uppercase">
+        KODPEN COFFEE
+    </nav>
 
     <div class="container mx-auto px-4 py-6 max-w-md">
         <div id="notifPermissionBox" class="hidden mb-4 p-3 bg-blue-600 text-white rounded-xl text-xs flex justify-between items-center shadow-lg">
-            <span>Aktifkan suara & notifikasi pesanan?</span>
+            <span>Aktifkan suara notifikasi pesanan?</span>
             <button onclick="requestNotifPermission()" class="bg-white text-blue-600 px-3 py-1 rounded-lg font-bold uppercase">Aktifkan</button>
         </div>
 
         <div class="text-center mb-8">
-            <img src="logo_kodpen.png" class="mx-auto w-24 mb-2" onerror="this.src='https://via.placeholder.com/100?text=KODPEN'">
+            <img src="logo_kodpen.png" alt="Logo" class="mx-auto w-24 mb-2" onerror="this.src='https://via.placeholder.com/100?text=KODPEN'">
             <h2 class="text-xl font-black text-starbucks italic uppercase tracking-tighter">"So Ba Kopi Bro?"</h2>
         </div>
 
         <div class="mb-4 rounded-xl shadow-lg border-4 border-starbucks overflow-hidden bg-white">
-            <img src="ThisOurMenu.jpg" class="w-full">
+            <img src="ThisOurMenu.jpg" alt="Menu" class="w-full">
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
@@ -45,104 +53,143 @@
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
             <label class="block font-bold mb-2 border-b pb-2 uppercase text-xs tracking-widest text-gray-400">Daftar Menu:</label>
-            <div id="list-iced"></div><div id="list-non"></div><div id="list-manual"></div>
+            <div id="list-iced"></div>
+            <div id="list-non"></div>
+            <div id="list-manual"></div>
         </div>
 
         <div id="ringkasanContainer" class="bg-white p-4 rounded-xl shadow mb-6 hidden border-l-8 border-starbucks">
-            <label class="block font-bold mb-2 border-b pb-2 uppercase text-[10px] text-starbucks tracking-widest">Detail Pesanan Anda:</label>
+            <label class="block font-bold mb-2 border-b pb-2 uppercase text-[10px] text-starbucks tracking-widest">Detail Pilihan Anda:</label>
             <div id="ringkasanList" class="space-y-1 text-xs font-medium text-gray-700"></div>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow mb-6">
-            <label class="block font-bold mb-4 uppercase text-xs tracking-widest">Metode Pembayaran:</label>
+            <label class="block font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Metode Pembayaran:</label>
             <div class="space-y-2 mb-4">
-                <label class="flex items-center p-3 border rounded-lg cursor-pointer"><input type="radio" name="payment" value="Transfer BNI" onchange="valBtn()" class="mr-3"> Transfer BNI</label>
-                <label class="flex items-center p-3 border rounded-lg cursor-pointer"><input type="radio" name="payment" value="QRIS" onchange="valBtn()" class="mr-3"> QRIS (Barcode)</label>
-                <label class="flex items-center p-3 border rounded-lg cursor-pointer"><input type="radio" name="payment" value="Tunai" onchange="valBtn()" class="mr-3" checked> Tunai (Kasir)</label>
+                <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                    <input type="radio" name="payment" value="Transfer BNI" onchange="valBtn()" class="mr-3"> Transfer BNI
+                </label>
+                <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                    <input type="radio" name="payment" value="QRIS" onchange="valBtn()" class="mr-3"> QRIS
+                </label>
+                <label class="flex items-center p-3 border rounded-lg cursor-pointer">
+                    <input type="radio" name="payment" value="Tunai" onchange="valBtn()" class="mr-3" checked> Tunai (Kasir)
+                </label>
             </div>
+
             <div id="uploadArea" class="hidden p-4 bg-gray-50 rounded-lg border-2 border-dashed">
                 <p class="text-[10px] font-bold text-red-600 mb-2 uppercase">Wajib Upload Bukti Bayar!</p>
-                <input type="file" id="buktiFile" accept="image/*" onchange="valBtn()" class="text-xs w-full">
+                <input type="file" id="buktiFile" accept="image/*" onchange="valBtn()" class="text-xs mb-3 w-full">
             </div>
         </div>
 
         <div class="text-center py-6 bg-white rounded-xl shadow-2xl px-4 sticky bottom-4">
             <div id="statusContainer" class="hidden mb-4 space-y-2">
-                <div id="msgTunai" class="hidden p-3 bg-red-100 border border-red-500 rounded-lg text-red-700 text-[10px] font-bold uppercase leading-tight">⚠️ Selesaikan pembayaran di kasir agar pesanan segera di proses</div>
-                <div id="msgProses" class="hidden p-3 bg-green-100 border-2 border-green-500 rounded-lg text-green-700 text-sm font-black blink-notif uppercase">☕ Pesanan sedang di proses barista!</div>
-                <div id="msgBatal" class="hidden p-3 bg-gray-900 text-white rounded-lg text-[10px] font-bold uppercase">❌ Pesanan Anda Dibatalkan Barista</div>
+                <div id="msgTunai" class="hidden p-3 bg-red-100 border border-red-500 rounded-lg text-red-700 text-[10px] font-bold uppercase leading-tight">
+                    ⚠️ Selesaikan proses pembayaran secara tunai di kasir agar pesanan anda segera di proses
+                </div>
+                <div id="msgProses" class="hidden p-3 bg-green-100 border-2 border-green-500 rounded-lg text-green-700 text-sm font-black blink-notif uppercase">
+                    ☕ Pesanan sedang di proses barista!
+                </div>
+                <div id="msgJemput" class="hidden p-3 bg-blue-600 border-2 border-blue-400 rounded-lg text-white text-sm font-black blink-notif uppercase animate-bounce">
+                    🔔 Pesanan SIAP! Silakan Jemput
+                </div>
+                <div id="msgBatal" class="hidden p-3 bg-gray-900 text-white rounded-lg text-[10px] font-bold uppercase">
+                    ❌ Pesanan Anda Dibatalkan Barista
+                </div>
             </div>
+
             <div class="text-xl font-bold mb-4">Total: <span id="totalHarga" class="text-starbucks text-2xl font-black">Rp 0</span></div>
-            <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl">PESAN SEKARANG</button>
-            <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl">MY BILL (UNDUH NOTA)</button>
+            <button id="btnPesan" onclick="kirimPesanan()" class="w-full bg-starbucks text-white font-bold py-4 rounded-full shadow-xl active:scale-95 transition">
+                PESAN SEKARANG
+            </button>
+            <button id="btnMyBill" onclick="unduhStruk()" class="hidden w-full mt-4 bg-blue-600 text-white font-bold py-4 rounded-full shadow-xl">
+                <i class="fas fa-file-invoice mr-2"></i> MY BILL (UNDUH NOTA)
+            </button>
         </div>
     </div>
 
-    <div class="receipt-hidden"><div id="receipt-area"></div></div>
+    <div class="receipt-hidden">
+        <div id="receipt-area">
+            <div style="text-align: center; border-bottom: 1px dashed black; padding-bottom: 5px; margin-bottom: 5px;">
+                <img src="logo_kodpen.png" style="width: 25mm; margin: 0 auto; display: block;" onerror="this.style.display='none'">
+                <strong style="font-size: 14px;">KODPEN COFFEE</strong><br>
+                "So Ba Kopi Bro?"
+            </div>
+            <div id="receipt-meta" style="font-size: 10px; margin-bottom: 5px;"></div>
+            <div style="border-bottom: 1px dashed black; margin-bottom: 5px;"></div>
+            <div id="receipt-items"></div>
+            <div style="border-top: 1px dashed black; margin-top: 5px; padding-top: 5px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>TOTAL:</span> <span id="receipt-total"></span>
+                </div>
+                <div style="font-size: 9px; margin-top: 5px;">Metode: <span id="receipt-pay"></span></div>
+            </div>
+            <div style="text-align: center; margin-top: 15px; font-size: 9px; border-top: 1px dashed black; padding-top: 5px;">Terima kasih! Ditunggu kedatangannya kembali.</div>
+        </div>
+    </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbweNwkE3OmJu7IRu7FU0y-R06Osf9JCfb8ToJbF4PFHbButkG7NRGsJ63RWFpnUeI2paA/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwLBagtomlSSz5lN6hskFF5AZFu0FrxzrGkBLLWx0w22MOoyoiMWHBaL2HPOsBT0KPS7w/exec';
         const menuData = { iced:[{n:"Street Coffee", h:15000},{n:"Americano", h:15000},{n:"ButterStreet", h:20000},{n:"Aren Royale", h:20000},{n:"Pop Rock", h:20000}], non:[{n:"Chocolate", h:18000},{n:"Matcha", h:18000},{n:"Red Velvet", h:18000}], manual:[{n:"Hot Coffee Milk", h:13000}] };
-        let keranjang = {}; let lastOrder = {}; let pollStatus; let currentStatus = "";
         
-        // Audio Notifikasi
+        let keranjang = {}; 
+        let lastOrder = {}; 
+        let pollStatus; 
+        let currentStatus = "";
         const notifSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
         document.addEventListener('DOMContentLoaded', () => {
             const sel = document.getElementById('nomorMeja');
             for(let i=1; i<=20; i++) sel.innerHTML += `<option value="${i}">Meja ${i}</option>`;
             
-            // Tangkap nomor meja dari link (?meja=X)
+            // Smart QR: Capture table number from URL
             const urlMeja = new URLSearchParams(window.location.search).get('meja');
             if(urlMeja) sel.value = urlMeja;
 
-            // Cek Izin Notifikasi
-            if (Notification.permission !== "granted") {
-                document.getElementById('notifPermissionBox').classList.remove('hidden');
-            }
+            if (Notification.permission !== "granted") document.getElementById('notifPermissionBox').classList.remove('hidden');
 
+            // Render Menus
             Object.keys(menuData).forEach(cat => {
                 const cont = document.getElementById('list-' + (cat==='iced'?'iced':cat==='non'?'non':'manual'));
                 menuData[cat].forEach(item => {
                     const id = item.n.replace(/\s+/g, '');
-                    cont.innerHTML += `<div class="menu-item flex justify-between items-center px-1"><div><p class="font-bold text-sm text-gray-800">${item.n}</p><p class="text-xs text-gray-400">Rp ${item.h.toLocaleString()}</p></div><div class="flex items-center gap-3"><button onclick="qty('${item.n}',${item.h},-1)" class="w-8 h-8 rounded-full bg-gray-100 font-bold">-</button><span id="q-${id}" class="font-bold text-sm w-4 text-center">0</span><button onclick="qty('${item.n}',${item.h},1)" class="w-8 h-8 rounded-full bg-starbucks text-white font-bold">+</button></div></div>`;
+                    cont.innerHTML += `<div class="menu-item flex justify-between items-center px-1"><div><p class="font-bold text-sm text-gray-800">${item.n}</p><p class="text-xs text-gray-400 italic">Rp ${item.h.toLocaleString()}</p></div><div class="flex items-center gap-3"><button onclick="qty('${item.n}',${item.h},-1)" class="w-8 h-8 rounded-full bg-gray-100 font-bold">-</button><span id="q-${id}" class="font-bold text-sm w-4 text-center">0</span><button onclick="qty('${item.n}',${item.h},1)" class="w-8 h-8 rounded-full bg-starbucks text-white font-bold">+</button></div></div>`;
                 });
             });
             loadFromMemory();
             valBtn();
         });
 
-        function requestNotifPermission() {
-            Notification.requestPermission().then(p => {
-                if(p === "granted") {
-                    document.getElementById('notifPermissionBox').classList.add('hidden');
-                    notifSound.play(); // Tes bunyi
-                }
-            });
+        function requestNotifPermission() { 
+            Notification.requestPermission().then(p => { if(p === "granted") { document.getElementById('notifPermissionBox').classList.add('hidden'); notifSound.play(); } }); 
         }
 
-        function triggerNotif(title, body) {
-            notifSound.play().catch(e => console.log("Audio diblokir"));
-            if (Notification.permission === "granted") {
-                new Notification(title, { body: body, icon: "logo_kodpen.png" });
-            }
+        function triggerNotif(title, body) { 
+            notifSound.play().catch(()=>{}); 
+            if (Notification.permission === "granted") new Notification(title, { body: body, icon: "logo_kodpen.png" }); 
         }
 
-        function qty(n,h,c) { if(!keranjang[n]) keranjang[n]={q:0,h:h}; keranjang[n].q+=c; if(keranjang[n].q<0) keranjang[n].q=0; document.getElementById('q-'+n.replace(/\s+/g,'')).innerText=keranjang[n].q; updateRingkasan(); localStorage.setItem('kodpen_keranjang', JSON.stringify(keranjang)); }
-
+        function qty(n,h,c) { 
+            if(!keranjang[n]) keranjang[n]={q:0,h:h}; 
+            keranjang[n].q+=c; if(keranjang[n].q<0) keranjang[n].q=0; 
+            document.getElementById('q-'+n.replace(/\s+/g,'')).innerText=keranjang[n].q; 
+            updateRingkasan(); 
+            localStorage.setItem('kodpen_keranjang', JSON.stringify(keranjang)); 
+        }
+        
         function updateRingkasan() {
             const cont = document.getElementById('ringkasanContainer');
             const list = document.getElementById('ringkasanList');
-            const totalH = document.getElementById('totalHarga');
             let t = 0; list.innerHTML = "";
-            Object.keys(keranjang).forEach(k => {
-                if(keranjang[k].q > 0) {
-                    t += (keranjang[k].q * keranjang[k].h);
-                    list.innerHTML += `<div class="flex justify-between"><span>${k} (x${keranjang[k].q})</span><span>Rp ${(keranjang[k].q * keranjang[k].h).toLocaleString()}</span></div>`;
-                }
+            Object.keys(keranjang).forEach(k => { 
+                if(keranjang[k].q > 0) { 
+                    t += (keranjang[k].q * keranjang[k].h); 
+                    list.innerHTML += `<div class="flex justify-between"><span>${k} (x${keranjang[k].q})</span><span>Rp ${(keranjang[k].q * keranjang[k].h).toLocaleString()}</span></div>`; 
+                } 
             });
             cont.classList.toggle('hidden', t === 0);
-            totalH.innerText = "Rp " + t.toLocaleString('id-ID');
+            document.getElementById('totalHarga').innerText = "Rp " + t.toLocaleString('id-ID');
             valBtn();
         }
 
@@ -150,7 +197,14 @@
             const savedK = localStorage.getItem('kodpen_keranjang');
             const savedID = localStorage.getItem('kodpen_id');
             const savedData = localStorage.getItem('kodpen_data');
-            if(savedK) { keranjang = JSON.parse(savedK); updateRingkasan(); Object.keys(keranjang).forEach(k => { const el = document.getElementById('q-'+k.replace(/\s+/g,'')); if(el) el.innerText = keranjang[k].q; }); }
+            if(savedK) { 
+                keranjang = JSON.parse(savedK); 
+                updateRingkasan(); 
+                Object.keys(keranjang).forEach(k => { 
+                    const el = document.getElementById('q-'+k.replace(/\s+/g,'')); 
+                    if(el) el.innerText = keranjang[k].q; 
+                }); 
+            }
             if(savedID && savedData) {
                 lastOrder = JSON.parse(savedData);
                 fetch(`${scriptURL}?orderId=${savedID}`).then(r => r.text()).then(status => {
@@ -163,13 +217,18 @@
             }
         }
 
-        function valBtn() { const pay = document.querySelector('input[name="payment"]:checked').value; const btn = document.getElementById('btnPesan'); if(pay==='Tunai'){ document.getElementById('uploadArea').classList.add('hidden'); btn.disabled=false; btn.classList.remove('opacity-50'); } else { document.getElementById('uploadArea').classList.remove('hidden'); btn.disabled = document.getElementById('buktiFile').files.length === 0; btn.classList.toggle('opacity-50', btn.disabled); } }
+        function valBtn() { 
+            const pay = document.querySelector('input[name="payment"]:checked').value; 
+            const btn = document.getElementById('btnPesan'); 
+            if(pay==='Tunai'){ document.getElementById('uploadArea').classList.add('hidden'); btn.disabled=false; btn.classList.remove('opacity-50'); }
+            else { document.getElementById('uploadArea').classList.remove('hidden'); btn.disabled = document.getElementById('buktiFile').files.length === 0; btn.classList.toggle('opacity-50', btn.disabled); } 
+        }
 
         async function kirimPesanan() {
             const meja = document.getElementById('nomorMeja').value;
             const fileInput = document.getElementById('buktiFile');
             let det = ""; Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) det += `${k} (x${keranjang[k].q}), `; });
-            if(!meja || !det) return alert("Pilih Meja & Menu!");
+            if(!meja || !det) return alert("Lengkapi Meja & Menu!");
             const btn = document.getElementById('btnPesan'); btn.innerText = "MENGIRIM..."; btn.disabled = true;
             const orderId = "ORD-" + new Date().getTime();
             let fileB64 = ""; if(fileInput.files.length > 0) { fileB64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result); reader.readAsDataURL(fileInput.files[0]); }); }
@@ -177,7 +236,9 @@
             fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...lastOrder, fileBase64: fileB64, fileName: fileInput.files[0]?.name || ""}) })
             .then(() => {
                 localStorage.setItem('kodpen_id', orderId); localStorage.setItem('kodpen_data', JSON.stringify(lastOrder));
-                alert("PESANAN BERHASIL!"); btn.classList.add('hidden'); document.getElementById('btnMyBill').classList.remove('hidden');
+                alert("PESANAN BERHASIL!"); 
+                btn.classList.add('hidden'); 
+                document.getElementById('btnMyBill').classList.remove('hidden');
                 startPolling(orderId, lastOrder.pembayaran, "Antri");
             });
         }
@@ -185,38 +246,39 @@
         function startPolling(id, pay, initialStatus) {
             currentStatus = initialStatus;
             document.getElementById('statusContainer').classList.remove('hidden');
-            if(pay === "Tunai" && currentStatus === "Antri") document.getElementById('msgTunai').classList.remove('hidden');
-            
+            updateUI(initialStatus, pay);
             pollStatus = setInterval(() => {
                 fetch(`${scriptURL}?orderId=${id}`).then(res => res.text()).then(status => {
-                    // LOGIKA NOTIFIKASI SEKALI SAJA (Hanya bunyi jika status berubah)
                     if (status !== currentStatus) {
-                        if (status === "Proses") {
-                            triggerNotif("KODPEN COFFEE", "Pesanan sedang diracik barista! ☕");
-                            document.getElementById('msgTunai').classList.add('hidden');
-                            document.getElementById('msgBatal').classList.add('hidden');
-                            document.getElementById('msgProses').classList.remove('hidden');
-                        } else if (status === "Batal") {
-                            triggerNotif("KODPEN COFFEE", "Maaf, pesanan Anda dibatalkan. ❌");
-                            document.getElementById('msgTunai').classList.add('hidden');
-                            document.getElementById('msgProses').classList.add('hidden');
-                            document.getElementById('msgBatal').classList.remove('hidden');
-                            clearInterval(pollStatus);
-                        } else if (status === "Selesai") {
-                            triggerNotif("KODPEN COFFEE", "Selesai! Selamat menikmati. ✅");
-                            localStorage.clear();
-                            alert("Pesanan Selesai!");
-                            window.location.reload();
-                        }
-                        currentStatus = status; // Simpan status baru agar tidak bunyi lagi
+                        if (status === "Proses") triggerNotif("KODPEN COFFEE", "Pesanan sedang diracik! ☕");
+                        else if (status === "Jemput") {
+                            let c = 0; let i = setInterval(() => { 
+                                triggerNotif("KODPEN COFFEE", "PESANAN SIAP! Ambil di kasir 🔔"); 
+                                c++; if(c>=3) clearInterval(i); 
+                            }, 3000);
+                        } else if (status === "Batal") triggerNotif("KODPEN COFFEE", "Maaf, pesanan dibatalkan ❌");
+                        else if (status === "Selesai") { localStorage.clear(); alert("Selesai!"); window.location.reload(); }
+                        updateUI(status, pay); currentStatus = status;
                     }
                 });
             }, 10000);
         }
 
+        function updateUI(s, pay) {
+            const mT = document.getElementById('msgTunai'); const mP = document.getElementById('msgProses'); const mJ = document.getElementById('msgJemput'); const mB = document.getElementById('msgBatal');
+            mT.classList.add('hidden'); mP.classList.add('hidden'); mJ.classList.add('hidden'); mB.classList.add('hidden');
+            if(s === "Antri" && pay === "Tunai") mT.classList.remove('hidden');
+            if(s === "Proses") mP.classList.remove('hidden');
+            if(s === "Jemput") mJ.classList.remove('hidden');
+            if(s === "Batal") mB.classList.remove('hidden');
+        }
+
         function unduhStruk() {
             const area = document.getElementById('receipt-area');
-            area.innerHTML = `<div style="text-align:center"><strong>KODPEN COFFEE</strong><br>MEJA ${lastOrder.meja}<br><hr>${lastOrder.pesanan.split(', ').join('<br>')}<br><hr>Total: ${lastOrder.total}<br>Metode: ${lastOrder.pembayaran}</div>`;
+            document.getElementById('receipt-meta').innerHTML = `Tgl: ${lastOrder.date}<br>Meja: ${lastOrder.meja}<br>ID: ${lastOrder.orderId}`;
+            document.getElementById('receipt-items').innerHTML = lastOrder.pesanan.split(', ').map(item => `<div style="display:flex; justify-content:space-between;"><span>${item}</span></div>`).join('');
+            document.getElementById('receipt-total').innerText = lastOrder.total;
+            document.getElementById('receipt-pay').innerText = lastOrder.pembayaran;
             html2canvas(area, {scale:3}).then(c => { const a = document.createElement('a'); a.download = 'Nota_Kodpen.png'; a.href = c.toDataURL(); a.click(); });
         }
     </script>
