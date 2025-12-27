@@ -149,233 +149,237 @@
 
     <div class="receipt-hidden"><div id="receipt-area"></div></div>
 
-    <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbykC2iRLfeS2VLPyilfa0MNeOwBEWXGRixxIAbQFjJNHh1W7QKxEM_9A_q5mZlITSFwuA/exec';
-        
-        let keranjang = {}; 
-        let isMuted = false;
-        let lastOrder = null;
-        let alarmManuallyStopped = false;
-        const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+   <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbykC2iRLfeS2VLPyilfa0MNeOwBEWXGRixxIAbQFjJNHh1W7QKxEM_9A_q5mZlITSFwuA/exec';
+    
+    let keranjang = {}; 
+    let isMuted = false;
+    let lastOrder = null;
+    let alarmManuallyStopped = false;
+    const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initMeja(); 
-            loadMenu(); 
-            checkSavedOrder();
+    document.addEventListener('DOMContentLoaded', () => {
+        initMeja(); 
+        loadMenu(); // Di dalam loadMenu nanti kita panggil restore keranjang
+        checkSavedOrder();
+    });
+
+    function cleanID(name) { return name.replace(/[^a-zA-Z0-9]/g, ''); }
+
+    function initMeja() {
+        const sel = document.getElementById('nomorMeja');
+        const savedMeja = localStorage.getItem('kodpen_meja');
+        for(let i=1; i<=20; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `MEJA ${i}`;
+            if(savedMeja == i) opt.selected = true;
+            sel.appendChild(opt);
+        }
+    }
+
+    async function loadMenu() {
+        try {
+            const res = await fetch(`${scriptURL}?getMenu=true`);
+            const menus = await res.json();
+            renderMenu(menus);
+            
+            // RESTORE DRAFT: Ambil data keranjang dari localStorage setelah menu dimuat
+            const savedCart = localStorage.getItem('kodpen_cart');
+            if(savedCart) {
+                keranjang = JSON.parse(savedCart);
+                Object.keys(keranjang).forEach(name => {
+                    const el = document.getElementById('q-' + cleanID(name));
+                    if(el) el.innerText = keranjang[name].q;
+                });
+                updateRingkasan();
+            }
+        } catch (e) { document.getElementById('menuContainer').innerHTML = "<p class='text-center text-red-500 font-bold'>Gagal memuat menu.</p>"; }
+    }
+
+    function renderMenu(menus) {
+        const container = document.getElementById('menuContainer'); container.innerHTML = "";
+        const categories = [...new Set(menus.map(m => m.cat))];
+        categories.forEach(cat => {
+            let catHtml = `<div class="mb-4"><h3 class="text-xs font-black uppercase tracking-widest border-l-4 border-[#00704A] pl-3 mb-4 text-gray-500">${cat}</h3><div class="grid grid-cols-1 gap-3">`;
+            menus.filter(m => m.cat === cat).forEach(item => {
+                const isClose = item.s === "Close";
+                const itemID = cleanID(item.n);
+                catHtml += `<div class="glass-card p-4 rounded-3xl flex justify-between items-center shadow-sm ${isClose ? 'sold-out' : 'active:bg-gray-50'}">
+                    <div class="flex-1"><p class="font-black text-gray-800 text-sm uppercase">${item.n}</p><p class="text-xs font-bold text-[#00704A] mt-1">Rp ${Number(item.h).toLocaleString()}</p></div>
+                    <div class="flex items-center gap-4">
+                        <button onclick="qty('${item.n}',${item.h},-1)" class="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center font-black">-</button>
+                        <span id="q-${itemID}" class="font-black text-sm w-4 text-center">0</span>
+                        <button onclick="qty('${item.n}',${item.h},1)" class="w-10 h-10 rounded-2xl bg-[#00704A] text-white flex items-center justify-center font-black shadow-md">+</button>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML += catHtml + `</div></div>`;
+        });
+    }
+
+    function qty(n, h, c) {
+        // Jika sudah ada transaksi aktif, kunci tombol qty
+        if(localStorage.getItem('kodpen_id')) return;
+
+        if(!keranjang[n]) keranjang[n] = {q:0, h:h};
+        keranjang[n].q += c; if(keranjang[n].q < 0) keranjang[n].q = 0;
+        const el = document.getElementById('q-' + cleanID(n));
+        if(el) el.innerText = keranjang[n].q;
+        
+        // Simpan ke localStorage agar tidak hilang saat refresh
+        localStorage.setItem('kodpen_cart', JSON.stringify(keranjang));
+        updateRingkasan();
+    }
+
+    function updateRingkasan() {
+        const cont = document.getElementById('ringkasanContainer');
+        const list = document.getElementById('ringkasanList');
+        let total = 0; list.innerHTML = "";
+        
+        Object.keys(keranjang).forEach(k => {
+            if(keranjang[k].q > 0) {
+                const sub = keranjang[k].q * keranjang[k].h; total += sub;
+                list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${k} (x${keranjang[k].q})</span><span>Rp ${sub.toLocaleString()}</span></div>`;
+            }
         });
 
-        // Anti-Error ID Generator
-        function cleanID(name) {
-            return name.replace(/[^a-zA-Z0-9]/g, '');
-        }
+        cont.classList.toggle('hidden', total === 0);
+        document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString('id-ID');
+        document.getElementById('totalTextRingkasan').innerText = "Rp " + total.toLocaleString('id-ID');
+        valBtn();
+    }
 
-        function initMeja() {
-            const sel = document.getElementById('nomorMeja');
-            for(let i=1; i<=20; i++) sel.innerHTML += `<option value="${i}">MEJA ${i}</option>`;
-        }
+    function valBtn() {
+        const meja = document.getElementById('nomorMeja').value;
+        if(meja) localStorage.setItem('kodpen_meja', meja); // Simpan nomor meja
 
-        async function loadMenu() {
-            try {
-                const res = await fetch(`${scriptURL}?getMenu=true`);
-                const menus = await res.json();
-                renderMenu(menus);
-            } catch (e) { document.getElementById('menuContainer').innerHTML = "<p class='text-center text-red-500 font-bold'>Gagal memuat menu. Cek koneksi.</p>"; }
-        }
+        const payInput = document.querySelector('input[name="payment"]:checked');
+        const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
+        const btn = document.getElementById('btnPesan');
+        const warning = document.getElementById('payWarning');
+        const file = document.getElementById('buktiFile');
+        
+        const isDigitalPay = payInput && payInput.value !== 'Tunai';
+        document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
 
-        function renderMenu(menus) {
-            const container = document.getElementById('menuContainer'); container.innerHTML = "";
-            const categories = [...new Set(menus.map(m => m.cat))];
-            categories.forEach(cat => {
-                let catHtml = `<div class="mb-4"><h3 class="text-xs font-black uppercase tracking-widest border-l-4 border-[#00704A] pl-3 mb-4 text-gray-500">${cat}</h3><div class="grid grid-cols-1 gap-3">`;
-                menus.filter(m => m.cat === cat).forEach(item => {
-                    const isClose = item.s === "Close";
-                    const itemID = cleanID(item.n);
-                    catHtml += `<div class="glass-card p-4 rounded-3xl flex justify-between items-center shadow-sm ${isClose ? 'sold-out' : 'active:bg-gray-50'}">
-                        <div class="flex-1"><p class="font-black text-gray-800 text-sm uppercase">${item.n}</p><p class="text-xs font-bold text-[#00704A] mt-1">Rp ${Number(item.h).toLocaleString()}</p></div>
-                        <div class="flex items-center gap-4">
-                            <button onclick="qty('${item.n}',${item.h},-1)" class="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center font-black">-</button>
-                            <span id="q-${itemID}" class="font-black text-sm w-4 text-center">0</span>
-                            <button onclick="qty('${item.n}',${item.h},1)" class="w-10 h-10 rounded-2xl bg-[#00704A] text-white flex items-center justify-center font-black shadow-md">+</button>
-                        </div>
-                    </div>`;
-                });
-                container.innerHTML += catHtml + `</div></div>`;
-            });
-        }
-
-        function qty(n, h, c) {
-            if(!keranjang[n]) keranjang[n] = {q:0, h:h};
-            keranjang[n].q += c; if(keranjang[n].q < 0) keranjang[n].q = 0;
-            const el = document.getElementById('q-' + cleanID(n));
-            if(el) el.innerText = keranjang[n].q;
-            updateRingkasan();
-        }
-
-        function updateRingkasan() {
-            const cont = document.getElementById('ringkasanContainer');
-            const list = document.getElementById('ringkasanList');
-            let total = 0; list.innerHTML = "";
-            Object.keys(keranjang).forEach(k => {
-                if(keranjang[k].q > 0) {
-                    const sub = keranjang[k].q * keranjang[k].h; total += sub;
-                    list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${k} (x${keranjang[k].q})</span><span>Rp ${sub.toLocaleString()}</span></div>`;
-                }
-            });
-            cont.classList.toggle('hidden', total === 0);
-            document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString('id-ID');
-            document.getElementById('totalTextRingkasan').innerText = "Rp " + total.toLocaleString('id-ID');
-            valBtn();
-        }
-
-        function valBtn() {
-            const meja = document.getElementById('nomorMeja').value;
-            const payInput = document.querySelector('input[name="payment"]:checked');
-            const totalStr = document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '');
-            const total = parseInt(totalStr) || 0;
-            const btn = document.getElementById('btnPesan');
-            const warning = document.getElementById('payWarning');
-            const file = document.getElementById('buktiFile');
-            
-            const isDigitalPay = payInput && payInput.value !== 'Tunai';
-            document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
-            document.getElementById('qrisSection').classList.toggle('hidden', payInput?.value !== 'QRIS');
-
-            if (total > 0 && meja && payInput) {
-                if (!isDigitalPay || file.files.length > 0) { 
-                    btn.disabled = false; 
-                    warning.classList.add('hidden'); 
-                } else { 
-                    btn.disabled = true; 
-                    warning.innerText = "Wajib Upload Bukti!"; 
-                    warning.classList.remove('hidden'); 
-                }
+        if (total > 0 && meja && payInput) {
+            if (!isDigitalPay || file.files.length > 0) { 
+                btn.disabled = false; 
+                warning.classList.add('hidden'); 
             } else { 
                 btn.disabled = true; 
-                warning.innerText = "Lengkapi Pesanan & Pembayaran";
-                warning.classList.remove('hidden'); 
+                warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); 
             }
-        }
+        } else { btn.disabled = true; warning.classList.remove('hidden'); }
+    }
 
-        async function kirimPesanan() {
-            // Pancing audio agar browser mengizinkan suara nanti
-            soundJemput.play().then(() => { soundJemput.pause(); soundJemput.currentTime = 0; }).catch(() => {});
-
-            const meja = document.getElementById('nomorMeja').value;
-            let detail = ""; Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) detail += `${k} (x${keranjang[k].q}), `; });
-            
-            const btn = document.getElementById('btnPesan'); 
-            btn.innerText = "MENGIRIM..."; btn.disabled = true;
-            
-            const orderId = "ORD-" + new Date().getTime();
-            const pay = document.querySelector('input[name="payment"]:checked').value;
-            let f64 = ""; 
-            const fi = document.getElementById('buktiFile');
-            
-            if(fi.files.length > 0) { 
-                f64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(fi.files[0]); }); 
-            }
-            
-            lastOrder = { orderId, meja, pesanan: detail.slice(0,-2), pembayaran: pay, total: document.getElementById('totalHarga').innerText, date: new Date().toLocaleString() };
-            
-            fetch(scriptURL, { 
-                method: 'POST', 
-                body: JSON.stringify({...lastOrder, fileBase64: f64, fileName: fi.files[0]?.name}) 
-            })
-            .then(r => r.json())
-            .then(() => { 
-                localStorage.setItem('kodpen_id', orderId); 
-                localStorage.setItem('kodpen_data', JSON.stringify(lastOrder)); 
-                window.location.reload(); 
-            })
-            .catch(err => {
-                alert("Gagal mengirim pesanan. Silahkan coba lagi.");
-                btn.innerText = "PESAN SEKARANG";
-                btn.disabled = false;
-            });
-        }
-
-        function checkSavedOrder() {
-            const sid = localStorage.getItem('kodpen_id'); 
-            const sdt = localStorage.getItem('kodpen_data');
-            if(sid && sdt) {
-                lastOrder = JSON.parse(sdt);
-                document.getElementById('btnPesan').classList.add('hidden');
-                document.getElementById('statusContainer').classList.remove('hidden');
-                document.getElementById('btnMyBill').classList.remove('hidden'); // Tampilkan tombol nota
-                startPolling(sid);
-            }
-        }
-
-        function startPolling(id) {
-            setInterval(() => {
-                fetch(`${scriptURL}?orderId=${id}`).then(r => r.json()).then(data => {
-                    if(data.status === "NotFound") { localStorage.clear(); location.reload(); return; }
-                    
-                    const sedDip = data.sedangDiproses;
-                    document.getElementById('txtNoAntrean').innerText = "#" + data.antrean;
-                    document.getElementById('txtSedangDiproses').innerText = (sedDip === 0 || !sedDip) ? "0" : "#" + sedDip;
-                    
-                    const msg = document.getElementById('msgStatus');
-                    if(data.status === "Antri") {
-                        if(lastOrder.pembayaran === "Tunai") {
-                            msg.innerHTML = "BAYAR DI KASIR SEKARANG!<br><span class='text-[9px]'>Agar pesanan segera diproses Barista</span>";
-                            msg.className = "p-4 rounded-2xl font-black text-xs bg-red-100 text-red-600 blink-notif border-2 border-red-600 shadow-lg";
-                        } else {
-                            msg.innerText = "Tunggu Konfirmasi Barista...";
-                            msg.className = "p-4 rounded-2xl font-black text-xs bg-gray-100 text-gray-400 uppercase";
-                        }
-                    } else if(data.status === "Proses") {
-                        msg.innerText = "Pesanan Sedang Dibuat ☕";
-                        msg.className = "p-4 rounded-2xl font-black text-xs bg-[#00704A] text-white shadow-md";
-                    } else if(data.status === "Jemput") {
-                        msg.innerText = "PESANAN SIAP! 🔔";
-                        msg.className = "p-4 rounded-2xl font-black text-xs bg-blue-600 text-white shadow-xl";
-                        document.getElementById('btnStopJemput').classList.remove('hidden');
-                        if(!isMuted && !alarmManuallyStopped) soundJemput.play().catch(()=>{});
-                    } else if(data.status === "Selesai") {
-                        localStorage.clear(); location.reload();
-                    }
-                }).catch(e => console.log("Polling error..."));
-            }, 5000);
-        }
-
-        function stopJemputAlarm() { 
-            soundJemput.pause(); 
-            soundJemput.currentTime = 0;
-            alarmManuallyStopped = true; 
-            document.getElementById('btnStopJemput').innerText = "ALARM MATI - SEDANG MENJEMPUT"; 
-            document.getElementById('btnStopJemput').classList.replace('bg-blue-600', 'bg-gray-400');
-        }
-
-        function downloadQR() { const a = document.createElement('a'); a.href = document.getElementById('qrisImg').src; a.download = 'QRIS_KODPEN.png'; a.click(); }
+    async function kirimPesanan() {
+        soundJemput.play().then(() => { soundJemput.pause(); soundJemput.currentTime = 0; }).catch(() => {});
+        const meja = document.getElementById('nomorMeja').value;
+        let detail = ""; 
+        Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) detail += `${k} (x${keranjang[k].q}), `; });
         
-        function toggleMute() { 
-            isMuted = !isMuted; 
-            document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; 
-            if(isMuted) { soundJemput.pause(); }
+        const btn = document.getElementById('btnPesan'); btn.innerText = "MENGIRIM..."; btn.disabled = true;
+        const orderId = "ORD-" + new Date().getTime();
+        const pay = document.querySelector('input[name="payment"]:checked').value;
+        let f64 = ""; const fi = document.getElementById('buktiFile');
+        
+        if(fi.files.length > 0) { 
+            f64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(fi.files[0]); }); 
         }
+        
+        lastOrder = { orderId, meja, pesanan: detail.slice(0,-2), pembayaran: pay, total: document.getElementById('totalHarga').innerText, date: new Date().toLocaleString() };
+        
+        fetch(scriptURL, { method: 'POST', body: JSON.stringify({...lastOrder, fileBase64: f64, fileName: fi.files[0]?.name}) })
+        .then(r => r.json()).then(() => { 
+            localStorage.setItem('kodpen_id', orderId); 
+            localStorage.setItem('kodpen_data', JSON.stringify(lastOrder)); 
+            // Hapus keranjang draft karena sudah jadi pesanan resmi
+            localStorage.removeItem('kodpen_cart'); 
+            window.location.reload(); 
+        });
+    }
 
-        function unduhStruk() {
-            if(!lastOrder) return;
-            const area = document.getElementById('receipt-area');
-            area.innerHTML = `
-                <div style="text-align:center">
-                    <strong style="font-size:14px">KODPEN COFFEE</strong><br>
-                    MEJA ${lastOrder.meja}<br>
-                    ${lastOrder.date}<br>
-                    ----------------------------<br>
-                    <div style="text-align:left">${lastOrder.pesanan.split(', ').join('<br>')}</div>
-                    ----------------------------<br>
-                    <strong>TOTAL: ${lastOrder.total}</strong><br>
-                    <small>Pembayaran: ${lastOrder.pembayaran}</small>
-                </div>`;
-            html2canvas(area, {scale:3}).then(c => { 
-                const a = document.createElement('a'); 
-                a.download = `Nota_${lastOrder.orderId}.png`; 
-                a.href = c.toDataURL(); 
-                a.click(); 
+    function checkSavedOrder() {
+        const sid = localStorage.getItem('kodpen_id'); 
+        const sdt = localStorage.getItem('kodpen_data');
+        if(sid && sdt) {
+            lastOrder = JSON.parse(sdt);
+            document.getElementById('btnPesan').classList.add('hidden');
+            document.getElementById('statusContainer').classList.remove('hidden');
+            document.getElementById('btnMyBill').classList.remove('hidden');
+
+            // TAMPILKAN RINCIAN PESANAN YANG SUDAH DIPESAN
+            const cont = document.getElementById('ringkasanContainer');
+            const list = document.getElementById('ringkasanList');
+            cont.classList.remove('hidden');
+            list.innerHTML = "";
+            const items = lastOrder.pesanan.split(', ');
+            items.forEach(item => {
+                list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${item}</span></div>`;
             });
+            document.getElementById('totalHarga').innerText = lastOrder.total;
+            document.getElementById('totalTextRingkasan').innerText = lastOrder.total;
+            document.getElementById('nomorMeja').disabled = true; // Kunci pilihan meja
+
+            startPolling(sid);
         }
-    </script>
+    }
+
+    function startPolling(id) {
+        setInterval(() => {
+            fetch(`${scriptURL}?orderId=${id}`).then(r => r.json()).then(data => {
+                if(data.status === "NotFound") { localStorage.clear(); location.reload(); return; }
+                
+                document.getElementById('txtNoAntrean').innerText = "#" + data.antrean;
+                document.getElementById('txtSedangDiproses').innerText = (!data.sedangDiproses) ? "0" : "#" + data.sedangDiproses;
+                
+                const msg = document.getElementById('msgStatus');
+                if(data.status === "Antri") {
+                    if(lastOrder.pembayaran === "Tunai") {
+                        msg.innerHTML = "BAYAR DI KASIR SEKARANG!<br><span class='text-[9px]'>Agar pesanan segera diproses Barista</span>";
+                        msg.className = "p-4 rounded-2xl font-black text-xs bg-red-100 text-red-600 blink-notif border-2 border-red-600 shadow-lg";
+                    } else {
+                        msg.innerText = "Tunggu Konfirmasi Barista...";
+                        msg.className = "p-4 rounded-2xl font-black text-xs bg-gray-100 text-gray-400 uppercase";
+                    }
+                } else if(data.status === "Proses") {
+                    msg.innerText = "Pesanan Sedang Dibuat ☕";
+                    msg.className = "p-4 rounded-2xl font-black text-xs bg-[#00704A] text-white shadow-md";
+                } else if(data.status === "Jemput") {
+                    msg.innerText = "PESANAN SIAP! 🔔";
+                    msg.className = "p-4 rounded-2xl font-black text-xs bg-blue-600 text-white shadow-xl";
+                    document.getElementById('btnStopJemput').classList.remove('hidden');
+                    if(!isMuted && !alarmManuallyStopped) soundJemput.play().catch(()=>{});
+                } else if(data.status === "Selesai") {
+                    // Transaksi selesai, hapus semua data storage
+                    localStorage.clear(); location.reload();
+                }
+            }).catch(e => {});
+        }, 5000);
+    }
+
+    function stopJemputAlarm() { 
+        soundJemput.pause(); soundJemput.currentTime = 0;
+        alarmManuallyStopped = true; 
+        document.getElementById('btnStopJemput').innerText = "ALARM MATI - SEDANG MENJEMPUT"; 
+        document.getElementById('btnStopJemput').classList.replace('bg-blue-600', 'bg-gray-400');
+    }
+
+    function toggleMute() { 
+        isMuted = !isMuted; 
+        document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; 
+    }
+
+    function downloadQR() { const a = document.createElement('a'); a.href = document.getElementById('qrisImg').src; a.download = 'QRIS_KODPEN.png'; a.click(); }
+
+    function unduhStruk() {
+        if(!lastOrder) return;
+        const area = document.getElementById('receipt-area');
+        area.innerHTML = `<div style="text-align:center"><strong style="font-size:14px">KODPEN COFFEE</strong><br>MEJA ${lastOrder.meja}<br>${lastOrder.date}<br>----------------------------<br><div style="text-align:left">${lastOrder.pesanan.split(', ').join('<br>')}</div>----------------------------<br><strong>TOTAL: ${lastOrder.total}</strong></div>`;
+        html2canvas(area, {scale:3}).then(c => { const a = document.createElement('a'); a.download = `Nota_${lastOrder.orderId}.png`; a.href = c.toDataURL(); a.click(); });
+    }
+</script>
 </body>
 </html>
