@@ -31,6 +31,8 @@
         }
 
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* PERBAIKAN: pointer-events dihapus agar tombol minus tetap bisa diklik */
         .sold-out { filter: grayscale(1); opacity: 0.6; position: relative; }
         .sold-out::after { 
             content: "SOLD OUT"; position: absolute; top: 50%; left: 50%; 
@@ -186,14 +188,12 @@
     let lastOrder = null;
     let alarmManuallyStopped = false;
     let pollingTimer = null;
-    const soundJemput = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
 
     document.addEventListener('DOMContentLoaded', () => {
         initMeja(); 
         loadMenu();
         checkSavedOrder();
 
-        // Refresh menu otomatis setiap 30 detik untuk update stok/menu baru 
         setInterval(() => {
             if (!localStorage.getItem('kodpen_id') && !document.hidden) {
                 loadMenu();
@@ -208,7 +208,6 @@
         const savedMeja = localStorage.getItem('kodpen_meja');
         const urlParams = new URLSearchParams(window.location.search);
         const mejaDariUrl = urlParams.get('meja');
-
         for(let i=1; i<=20; i++) {
             const opt = document.createElement('option');
             opt.value = i; opt.innerText = `MEJA ${i}`;
@@ -223,16 +222,12 @@
             const res = await fetch(`${scriptURL}?getMenu=true`);
             const menus = await res.json();
             renderMenu(menus);
-            
-            // Pertahankan jumlah pilihan pelanggan saat menu di-refresh otomatis [cite: 409-411]
             Object.keys(keranjang).forEach(name => {
                 const el = document.getElementById('q-' + cleanID(name));
                 if(el) el.innerText = keranjang[name].q;
             });
             updateRingkasan();
-        } catch (e) { 
-            console.log("Gagal update menu.");
-        }
+        } catch (e) { console.log("Gagal update menu."); }
     }
 
     function renderMenu(menus) {
@@ -245,7 +240,6 @@
                 const isClose = item.s === "Close";
                 const itemID = cleanID(item.n);
                 
-                // Area kartu hanya bisa diklik untuk menambah (qty 1) jika menu Ready
                 catHtml += `<div class="glass-card p-4 rounded-3xl flex justify-between items-center shadow-sm ${isClose ? 'sold-out' : 'active:bg-gray-50'}" 
                             onclick="${isClose ? '' : `qty('${item.n}',${item.h},1)`}">
                     <div class="flex-1">
@@ -254,9 +248,7 @@
                     </div>
                     <div class="flex items-center gap-4" onclick="event.stopPropagation()">
                         <button onclick="qty('${item.n}',${item.h},-1)" class="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center font-black">-</button>
-                        
                         <span id="q-${itemID}" class="font-black text-sm w-4 text-center">0</span>
-                        
                         <button onclick="${isClose ? '' : `qty('${item.n}',${item.h},1)`}" 
                                 ${isClose ? 'disabled' : ''} 
                                 class="w-10 h-10 rounded-2xl bg-[#00704A] text-white flex items-center justify-center font-black shadow-md disabled:bg-gray-300">
@@ -298,17 +290,14 @@
     function valBtn() {
         const nama = document.getElementById('namaPelanggan').value.trim();
         const meja = document.getElementById('nomorMeja').value;
-        if(meja) localStorage.setItem('kodpen_meja', meja);
         const payInput = document.querySelector('input[name="payment"]:checked');
         const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
         const btn = document.getElementById('btnPesan');
         const warning = document.getElementById('payWarning');
         const file = document.getElementById('buktiFile');
         const isDigitalPay = payInput && payInput.value !== 'Tunai';
-
         document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
         document.getElementById('qrisSection').classList.toggle('hidden', !(payInput && payInput.value === 'QRIS'));
-
         if (total > 0 && meja && nama && payInput) {
             if (!isDigitalPay || file.files.length > 0) { btn.disabled = false; warning.classList.add('hidden'); }
             else { btn.disabled = true; warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); }
@@ -318,32 +307,26 @@
     async function kirimPesanan() {
         const btn = document.getElementById('btnPesan');
         btn.disabled = true; btn.innerText = "MENGIRIM...";
-
         try {
-            // Validasi stok terakhir kali sebelum benar-benar memproses pesanan 
             const checkRes = await fetch(`${scriptURL}?getMenu=true`);
             const latestMenus = await checkRes.json();
             for (let item of latestMenus) {
                 if (item.s === "Close" && keranjang[item.n] && keranjang[item.n].q > 0) {
-                    alert(`Maaf, menu "${item.n}" baru saja habis/habis stok. Silakan hapus dari daftar pilihan Anda.`);
+                    alert(`Maaf, menu "${item.n}" baru saja habis. Silakan kurangi (klik tombol minus) menu tersebut agar bisa memesan.`);
                     btn.disabled = false; btn.innerText = "PESAN SEKARANG";
                     loadMenu(); return;
                 }
             }
-
             const meja = document.getElementById('nomorMeja').value;
             const nama = document.getElementById('namaPelanggan').value.toUpperCase();
-            let detail = ""; 
-            Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) detail += `${k} (x${keranjang[k].q}), `; });
+            let detail = ""; Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) detail += `${k} (x${keranjang[k].q}), `; });
             const orderId = "ORD-" + new Date().getTime();
             const pay = document.querySelector('input[name="payment"]:checked').value;
             let f64 = ""; const fi = document.getElementById('buktiFile');
             if(fi.files.length > 0) { f64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(fi.files[0]); }); }
-            
             lastOrder = { orderId, nama, meja, pesanan: detail.slice(0,-2), pembayaran: pay, total: document.getElementById('totalHarga').innerText, date: new Date().toLocaleString('id-ID') };
             const response = await fetch(scriptURL, { method: 'POST', body: JSON.stringify({...lastOrder, fileBase64: f64, fileName: fi.files[0]?.name}) });
             const resData = await response.json();
-
             if(resData.result === "success") {
                 localStorage.setItem('kodpen_id', orderId); localStorage.setItem('kodpen_data', JSON.stringify(lastOrder)); localStorage.removeItem('kodpen_cart'); window.location.reload(); 
             } else { alert("Gagal: " + resData.message); btn.disabled = false; btn.innerText = "PESAN SEKARANG"; }
@@ -358,10 +341,9 @@
             document.getElementById('statusContainer').classList.remove('hidden');
             document.getElementById('btnMyBill').classList.remove('hidden');
             document.getElementById('payWarning').classList.add('hidden');
-            const list = document.getElementById('ringkasanList');
             document.getElementById('ringkasanContainer').classList.remove('hidden');
-            list.innerHTML = `<div class="mb-2 text-[#00704A] font-black text-xs uppercase">PEMESAN: ${lastOrder.nama}</div>`;
-            lastOrder.pesanan.split(', ').forEach(item => { list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${item}</span></div>`; });
+            document.getElementById('ringkasanList').innerHTML = `<div class="mb-2 text-[#00704A] font-black text-xs uppercase">PEMESAN: ${lastOrder.nama}</div>`;
+            lastOrder.pesanan.split(', ').forEach(item => { document.getElementById('ringkasanList').innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${item}</span></div>`; });
             document.getElementById('totalHarga').innerText = lastOrder.total;
             document.getElementById('totalTextRingkasan').innerText = lastOrder.total;
             document.getElementById('namaPelanggan').value = lastOrder.nama;
@@ -391,7 +373,16 @@
                 } else if(data.status === "Jemput") {
                     msg.innerText = "PESANAN SIAP! SILAKAN JEMPUT 🔔"; msg.className = "p-4 rounded-2xl font-black text-xs bg-blue-600 text-white shadow-xl blink-notif";
                     document.getElementById('btnStopJemput').classList.remove('hidden');
-                    if(!isMuted && !alarmManuallyStopped) soundJemput.play().catch(()=>{});
+                    
+                    // PERBAIKAN: Suara Bahasa Indonesia
+                    if(!isMuted && !alarmManuallyStopped) {
+                        if (!window.speechSynthesis.speaking) {
+                            const pesanSuara = new SpeechSynthesisUtterance("Pesanan Anda telah selesai dan siap di jemput");
+                            pesanSuara.lang = 'id-ID'; 
+                            pesanSuara.rate = 1.0; 
+                            window.speechSynthesis.speak(pesanSuara);
+                        }
+                    }
                 } else if(data.status === "Batal") {
                     localStorage.clear(); clearInterval(pollingTimer); alert("Maaf, pesanan Anda telah dibatalkan oleh barista."); location.reload();
                 } else if(data.status === "Selesai") {
@@ -401,7 +392,15 @@
         }, 6000);
     }
 
-    function stopJemputAlarm() { soundJemput.pause(); soundJemput.currentTime = 0; alarmManuallyStopped = true; document.getElementById('btnStopJemput').innerText = "MENJEMPUT..."; document.getElementById('btnStopJemput').classList.replace('bg-blue-600', 'bg-gray-400'); }
+    function stopJemputAlarm() { 
+        // PERBAIKAN: Hentikan suara saat tombol diklik
+        window.speechSynthesis.cancel();
+        soundJemput.pause(); soundJemput.currentTime = 0; 
+        alarmManuallyStopped = true; 
+        document.getElementById('btnStopJemput').innerText = "MENJEMPUT..."; 
+        document.getElementById('btnStopJemput').classList.replace('bg-blue-600', 'bg-gray-400'); 
+    }
+    
     function toggleMute() { isMuted = !isMuted; document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
     function downloadQR() { const a = document.createElement('a'); a.href = document.getElementById('qrisImg').src; a.download = 'QRIS_KODPEN.png'; a.click(); }
 
