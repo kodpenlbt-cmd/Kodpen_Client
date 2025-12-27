@@ -64,12 +64,12 @@
     </nav>
 
     <div class="container mx-auto px-4 py-6 max-w-md md:max-w-2xl transition-all duration-300">
-        <div class="text-center mb-8 px-2">
+        <div class="text-center mb-8 px-2 max-w-md mx-auto">
             <img src="https://raw.githubusercontent.com/kodpenlbt-cmd/Kodpen_Client/main/logo_kodpen.png" 
                  class="mx-auto w-32 md:w-48 mb-4 rounded-full border-4 border-white shadow-xl transition-all duration-300"
                  onerror="this.src='https://via.placeholder.com/150?text=KODPEN'">
             
-            <div class="my-6 max-w-md mx-auto">
+            <div class="my-6">
                 <img src="https://raw.githubusercontent.com/kodpenlbt-cmd/Kodpen_Client/main/ThisOurMenu.jpg" 
                      class="w-full rounded-3xl shadow-2xl border-2 border-white object-cover"
                      alt="Our Menu"
@@ -192,6 +192,13 @@
         initMeja(); 
         loadMenu();
         checkSavedOrder();
+
+        // Refresh menu otomatis setiap 30 detik untuk update stok/menu baru 
+        setInterval(() => {
+            if (!localStorage.getItem('kodpen_id') && !document.hidden) {
+                loadMenu();
+            }
+        }, 30000);
     });
 
     function cleanID(name) { return name.replace(/[^a-zA-Z0-9]/g, ''); }
@@ -204,8 +211,7 @@
 
         for(let i=1; i<=20; i++) {
             const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerText = `MEJA ${i}`;
+            opt.value = i; opt.innerText = `MEJA ${i}`;
             if(mejaDariUrl == i) opt.selected = true;
             else if(!mejaDariUrl && savedMeja == i) opt.selected = true;
             sel.appendChild(opt);
@@ -218,17 +224,14 @@
             const menus = await res.json();
             renderMenu(menus);
             
-            const savedCart = localStorage.getItem('kodpen_cart');
-            if(savedCart && !localStorage.getItem('kodpen_id')) {
-                keranjang = JSON.parse(savedCart);
-                Object.keys(keranjang).forEach(name => {
-                    const el = document.getElementById('q-' + cleanID(name));
-                    if(el) el.innerText = keranjang[name].q;
-                });
-                updateRingkasan();
-            }
+            // Pertahankan jumlah pilihan pelanggan saat menu di-refresh otomatis [cite: 409-411]
+            Object.keys(keranjang).forEach(name => {
+                const el = document.getElementById('q-' + cleanID(name));
+                if(el) el.innerText = keranjang[name].q;
+            });
+            updateRingkasan();
         } catch (e) { 
-            document.getElementById('menuContainer').innerHTML = "<p class='text-center text-red-500 font-bold py-10 col-span-2'>Gagal memuat menu. Cek koneksi Anda.</p>"; 
+            console.log("Gagal update menu.");
         }
     }
 
@@ -247,9 +250,9 @@
                         <p class="text-xs font-bold text-[#00704A] mt-1">Rp ${Number(item.h).toLocaleString('id-ID')}</p>
                     </div>
                     <div class="flex items-center gap-4" onclick="event.stopPropagation()">
-                        <button onclick="qty('${item.n}',${item.h},-1)" class="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center font-black transition-transform active:scale-90">-</button>
+                        <button onclick="qty('${item.n}',${item.h},-1)" class="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center font-black">-</button>
                         <span id="q-${itemID}" class="font-black text-sm w-4 text-center">0</span>
-                        <button onclick="qty('${item.n}',${item.h},1)" class="w-10 h-10 rounded-2xl bg-[#00704A] text-white flex items-center justify-center font-black shadow-md transition-transform active:scale-90">+</button>
+                        <button onclick="qty('${item.n}',${item.h},1)" class="w-10 h-10 rounded-2xl bg-[#00704A] text-white flex items-center justify-center font-black shadow-md">+</button>
                     </div>
                 </div>`;
             });
@@ -260,12 +263,9 @@
     function qty(n, h, c) {
         if(localStorage.getItem('kodpen_id')) return;
         if(!keranjang[n]) keranjang[n] = {q:0, h:h};
-        keranjang[n].q += c; 
-        if(keranjang[n].q < 0) keranjang[n].q = 0;
-        
+        keranjang[n].q += c; if(keranjang[n].q < 0) keranjang[n].q = 0;
         const el = document.getElementById('q-' + cleanID(n));
         if(el) el.innerText = keranjang[n].q;
-        
         localStorage.setItem('kodpen_cart', JSON.stringify(keranjang));
         updateRingkasan();
     }
@@ -273,16 +273,13 @@
     function updateRingkasan() {
         const cont = document.getElementById('ringkasanContainer');
         const list = document.getElementById('ringkasanList');
-        let total = 0; 
-        list.innerHTML = "";
-        
+        let total = 0; list.innerHTML = "";
         Object.keys(keranjang).forEach(k => {
             if(keranjang[k].q > 0) {
                 const sub = keranjang[k].q * keranjang[k].h; total += sub;
                 list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${k} (x${keranjang[k].q})</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
             }
         });
-
         cont.classList.toggle('hidden', total === 0);
         document.getElementById('totalHarga').innerText = "Rp " + total.toLocaleString('id-ID');
         document.getElementById('totalTextRingkasan').innerText = "Rp " + total.toLocaleString('id-ID');
@@ -293,10 +290,8 @@
         const nama = document.getElementById('namaPelanggan').value.trim();
         const meja = document.getElementById('nomorMeja').value;
         if(meja) localStorage.setItem('kodpen_meja', meja);
-
         const payInput = document.querySelector('input[name="payment"]:checked');
-        const totalText = document.getElementById('totalHarga').innerText;
-        const total = parseInt(totalText.replace(/[^0-9]/g, '')) || 0;
+        const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
         const btn = document.getElementById('btnPesan');
         const warning = document.getElementById('payWarning');
         const file = document.getElementById('buktiFile');
@@ -306,96 +301,63 @@
         document.getElementById('qrisSection').classList.toggle('hidden', !(payInput && payInput.value === 'QRIS'));
 
         if (total > 0 && meja && nama && payInput) {
-            if (!isDigitalPay || file.files.length > 0) { 
-                btn.disabled = false; 
-                warning.classList.add('hidden'); 
-            } else { 
-                btn.disabled = true; 
-                warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); 
-            }
-        } else { 
-            btn.disabled = true; 
-            warning.classList.remove('hidden'); 
-            warning.innerText = "Lengkapi Nama, Meja & Menu";
-        }
+            if (!isDigitalPay || file.files.length > 0) { btn.disabled = false; warning.classList.add('hidden'); }
+            else { btn.disabled = true; warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); }
+        } else { btn.disabled = true; warning.classList.remove('hidden'); warning.innerText = "Lengkapi Nama, Meja & Menu"; }
     }
 
     async function kirimPesanan() {
         const btn = document.getElementById('btnPesan');
-        btn.disabled = true;
-        btn.innerText = "MENGIRIM...";
+        btn.disabled = true; btn.innerText = "MENGIRIM...";
 
         try {
+            // Validasi stok terakhir kali sebelum benar-benar memproses pesanan 
+            const checkRes = await fetch(`${scriptURL}?getMenu=true`);
+            const latestMenus = await checkRes.json();
+            for (let item of latestMenus) {
+                if (item.s === "Close" && keranjang[item.n] && keranjang[item.n].q > 0) {
+                    alert(`Maaf, menu "${item.n}" baru saja habis/habis stok. Silakan hapus dari daftar pilihan Anda.`);
+                    btn.disabled = false; btn.innerText = "PESAN SEKARANG";
+                    loadMenu(); return;
+                }
+            }
+
             const meja = document.getElementById('nomorMeja').value;
             const nama = document.getElementById('namaPelanggan').value.toUpperCase();
             let detail = ""; 
             Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) detail += `${k} (x${keranjang[k].q}), `; });
-            
             const orderId = "ORD-" + new Date().getTime();
             const pay = document.querySelector('input[name="payment"]:checked').value;
-            let f64 = ""; 
-            const fi = document.getElementById('buktiFile');
+            let f64 = ""; const fi = document.getElementById('buktiFile');
+            if(fi.files.length > 0) { f64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(fi.files[0]); }); }
             
-            if(fi.files.length > 0) { 
-                f64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(fi.files[0]); }); 
-            }
-            
-            lastOrder = { 
-                orderId, nama, meja, 
-                pesanan: detail.slice(0,-2), 
-                pembayaran: pay, 
-                total: document.getElementById('totalHarga').innerText, 
-                date: new Date().toLocaleString('id-ID') 
-            };
-            
-            const response = await fetch(scriptURL, { 
-                method: 'POST', 
-                body: JSON.stringify({...lastOrder, fileBase64: f64, fileName: fi.files[0]?.name}) 
-            });
+            lastOrder = { orderId, nama, meja, pesanan: detail.slice(0,-2), pembayaran: pay, total: document.getElementById('totalHarga').innerText, date: new Date().toLocaleString('id-ID') };
+            const response = await fetch(scriptURL, { method: 'POST', body: JSON.stringify({...lastOrder, fileBase64: f64, fileName: fi.files[0]?.name}) });
             const resData = await response.json();
 
             if(resData.result === "success") {
-                localStorage.setItem('kodpen_id', orderId); 
-                localStorage.setItem('kodpen_data', JSON.stringify(lastOrder)); 
-                localStorage.removeItem('kodpen_cart'); 
-                window.location.reload(); 
-            } else {
-                alert("Gagal mengirim pesanan: " + resData.message);
-                btn.disabled = false;
-                btn.innerText = "PESAN SEKARANG";
-            }
-        } catch (err) {
-            alert("Error Koneksi: Silakan coba lagi.");
-            btn.disabled = false;
-            btn.innerText = "PESAN SEKARANG";
-        }
+                localStorage.setItem('kodpen_id', orderId); localStorage.setItem('kodpen_data', JSON.stringify(lastOrder)); localStorage.removeItem('kodpen_cart'); window.location.reload(); 
+            } else { alert("Gagal: " + resData.message); btn.disabled = false; btn.innerText = "PESAN SEKARANG"; }
+        } catch (err) { alert("Error Koneksi."); btn.disabled = false; btn.innerText = "PESAN SEKARANG"; }
     }
 
     function checkSavedOrder() {
-        const sid = localStorage.getItem('kodpen_id'); 
-        const sdt = localStorage.getItem('kodpen_data');
+        const sid = localStorage.getItem('kodpen_id'); const sdt = localStorage.getItem('kodpen_data');
         if(sid && sdt) {
             lastOrder = JSON.parse(sdt);
             document.getElementById('btnPesan').classList.add('hidden');
             document.getElementById('statusContainer').classList.remove('hidden');
             document.getElementById('btnMyBill').classList.remove('hidden');
             document.getElementById('payWarning').classList.add('hidden');
-
-            const cont = document.getElementById('ringkasanContainer');
             const list = document.getElementById('ringkasanList');
-            cont.classList.remove('hidden');
+            document.getElementById('ringkasanContainer').classList.remove('hidden');
             list.innerHTML = `<div class="mb-2 text-[#00704A] font-black text-xs uppercase">PEMESAN: ${lastOrder.nama}</div>`;
-            lastOrder.pesanan.split(', ').forEach(item => {
-                list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${item}</span></div>`;
-            });
+            lastOrder.pesanan.split(', ').forEach(item => { list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${item}</span></div>`; });
             document.getElementById('totalHarga').innerText = lastOrder.total;
             document.getElementById('totalTextRingkasan').innerText = lastOrder.total;
-            
-            const inputNama = document.getElementById('namaPelanggan');
-            inputNama.value = lastOrder.nama;
-            inputNama.disabled = true;
+            document.getElementById('namaPelanggan').value = lastOrder.nama;
+            document.getElementById('namaPelanggan').disabled = true;
             document.getElementById('nomorMeja').disabled = true;
-
             startPolling(sid);
         }
     }
@@ -404,98 +366,41 @@
         if(pollingTimer) clearInterval(pollingTimer);
         pollingTimer = setInterval(() => {
             if(document.hidden) return; 
-
             fetch(`${scriptURL}?orderId=${id}`).then(r => r.json()).then(data => {
                 if(data.status === "NotFound") { localStorage.clear(); location.reload(); return; }
-                
                 document.getElementById('txtNoAntrean').innerText = "#" + data.antrean;
                 document.getElementById('txtSedangDiproses').innerText = (!data.sedangDiproses) ? "-" : "#" + data.sedangDiproses;
-                
                 const msg = document.getElementById('msgStatus');
                 if(data.status === "Antri") {
                     if(lastOrder.pembayaran === "Tunai") {
                         msg.innerHTML = "BAYAR DI KASIR SEKARANG!<br><span class='text-[9px]'>Agar segera dibuatkan barista</span>";
                         msg.className = "p-4 rounded-2xl font-black text-xs bg-red-100 text-red-600 blink-notif border-2 border-red-600";
-                    } else {
-                        msg.innerText = "Menunggu Konfirmasi...";
-                        msg.className = "p-4 rounded-2xl font-black text-xs bg-gray-100 text-gray-400 uppercase";
-                    }
+                    } else { msg.innerText = "Menunggu Konfirmasi..."; msg.className = "p-4 rounded-2xl font-black text-xs bg-gray-100 text-gray-400 uppercase"; }
                 } else if(data.status === "Proses") {
-                    msg.innerText = "Pesanan Sedang Dibuat ☕";
-                    msg.className = "p-4 rounded-2xl font-black text-xs bg-[#00704A] text-white shadow-md";
+                    msg.innerText = "Pesanan Sedang Dibuat ☕"; msg.className = "p-4 rounded-2xl font-black text-xs bg-[#00704A] text-white shadow-md";
                     alarmManuallyStopped = false;
                 } else if(data.status === "Jemput") {
-                    msg.innerText = "PESANAN SIAP! SILAKAN JEMPUT 🔔";
-                    msg.className = "p-4 rounded-2xl font-black text-xs bg-blue-600 text-white shadow-xl blink-notif";
+                    msg.innerText = "PESANAN SIAP! SILAKAN JEMPUT 🔔"; msg.className = "p-4 rounded-2xl font-black text-xs bg-blue-600 text-white shadow-xl blink-notif";
                     document.getElementById('btnStopJemput').classList.remove('hidden');
                     if(!isMuted && !alarmManuallyStopped) soundJemput.play().catch(()=>{});
-                } 
-                // --- TAMBAHKAN LOGIKA BATAL DI SINI ---
-                else if(data.status === "Batal") {
-                    localStorage.clear(); // Hapus data dari HP agar tidak stuck
-                    clearInterval(pollingTimer);
-                    alert("Maaf, pesanan Anda telah dibatalkan oleh barista.");
-                    location.reload();
-                } 
-                // -------------------------------------
-                else if(data.status === "Selesai") {
-                    localStorage.clear(); 
-                    clearInterval(pollingTimer);
-                    alert("Terima kasih sudah memesan! Sampai jumpa kembali.");
-                    location.reload();
+                } else if(data.status === "Batal") {
+                    localStorage.clear(); clearInterval(pollingTimer); alert("Maaf, pesanan Anda telah dibatalkan oleh barista."); location.reload();
+                } else if(data.status === "Selesai") {
+                    localStorage.clear(); clearInterval(pollingTimer); alert("Terima kasih sudah memesan!"); location.reload();
                 }
             }).catch(e => console.log("Polling error..."));
         }, 6000);
     }
 
-    function stopJemputAlarm() { 
-        soundJemput.pause(); soundJemput.currentTime = 0;
-        alarmManuallyStopped = true; 
-        document.getElementById('btnStopJemput').innerText = "MENJEMPUT..."; 
-        document.getElementById('btnStopJemput').classList.replace('bg-blue-600', 'bg-gray-400');
-    }
-
-    function toggleMute() { 
-        isMuted = !isMuted; 
-        document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; 
-    }
-
+    function stopJemputAlarm() { soundJemput.pause(); soundJemput.currentTime = 0; alarmManuallyStopped = true; document.getElementById('btnStopJemput').innerText = "MENJEMPUT..."; document.getElementById('btnStopJemput').classList.replace('bg-blue-600', 'bg-gray-400'); }
+    function toggleMute() { isMuted = !isMuted; document.getElementById('muteIcon').className = isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'; }
     function downloadQR() { const a = document.createElement('a'); a.href = document.getElementById('qrisImg').src; a.download = 'QRIS_KODPEN.png'; a.click(); }
 
     function unduhStruk() {
         if(!lastOrder) return;
         const area = document.getElementById('receipt-area');
-        area.innerHTML = `
-            <div style="text-align:center">
-                <strong style="font-size:16px">KODPEN COFFEE</strong><br>
-                Official Order Receipt<br>
-                ----------------------------<br>
-                NO ANTREAN: ${document.getElementById('txtNoAntrean').innerText}<br>
-                ----------------------------
-            </div>
-            <div style="margin:10px 0">
-                NAMA: ${lastOrder.nama}<br>
-                MEJA: ${lastOrder.meja}<br>
-                TGL : ${lastOrder.date}
-            </div>
-            ----------------------------<br>
-            <div style="text-align:left">
-                ${lastOrder.pesanan.split(', ').join('<br>')}
-            </div>
-            ----------------------------<br>
-            <div style="text-align:right">
-                <strong>TOTAL: ${lastOrder.total}</strong><br>
-                PAY: ${lastOrder.pembayaran}
-            </div>
-            <br>
-            <div style="text-align:center; font-style:italic">"So Ba Kopi Bro?"</div>
-        `;
-        html2canvas(area, {scale:2}).then(c => { 
-            const a = document.createElement('a'); 
-            a.download = `Nota_KODPEN_${lastOrder.orderId}.png`; 
-            a.href = c.toDataURL(); 
-            a.click(); 
-        });
+        area.innerHTML = `<div style="text-align:center"><strong style="font-size:16px">KODPEN COFFEE</strong><br>Receipt<br>---<br>ANTREAN: ${document.getElementById('txtNoAntrean').innerText}<br>---</div><div style="margin:10px 0">NAMA: ${lastOrder.nama}<br>MEJA: ${lastOrder.meja}<br>TGL : ${lastOrder.date}</div>---<br><div style="text-align:left">${lastOrder.pesanan.split(', ').join('<br>')}</div>---<br><div style="text-align:right"><strong>TOTAL: ${lastOrder.total}</strong><br>PAY: ${lastOrder.pembayaran}</div><br><div style="text-align:center; font-style:italic">"So Ba Kopi Bro?"</div>`;
+        html2canvas(area, {scale:2}).then(c => { const a = document.createElement('a'); a.download = `Nota_KODPEN_${lastOrder.orderId}.png`; a.href = c.toDataURL(); a.click(); });
     }
 </script>
 </body>
