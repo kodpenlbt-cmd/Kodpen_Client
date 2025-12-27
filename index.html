@@ -59,8 +59,10 @@
             <h2 class="text-xl font-black text-[#00704A] italic uppercase">"So Ba Kopi Bro?"</h2>
         </div>
 
-        <div class="mb-6 rounded-3xl overflow-hidden shadow-lg border-4 border-white">
-            <img src="ThisOurMenu.jpg" class="w-full" alt="Banner Promo" onerror="this.style.display='none'">
+        <div class="glass-card p-5 rounded-3xl shadow-md mb-4 border-b-4 border-[#00704A]">
+            <label class="block font-black text-[10px] uppercase mb-2 text-gray-400">Nama Pemesan:</label>
+            <input type="text" id="namaPelanggan" onkeyup="valBtn()" placeholder="Siapa nama Anda?" 
+                   class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold outline-none focus:border-[#00704A] transition uppercase text-sm">
         </div>
 
         <div class="glass-card p-5 rounded-3xl shadow-md mb-6 border-b-4 border-[#00704A]">
@@ -139,7 +141,7 @@
                 <span class="text-xs font-black text-gray-400 uppercase">Total Bayar:</span>
                 <span id="totalHarga" class="text-3xl font-black text-[#00704A]">Rp 0</span>
             </div>
-            <p id="payWarning" class="text-[10px] font-bold text-red-600 uppercase text-center mb-2 italic">Lengkapi Pesanan & Pembayaran</p>
+            <p id="payWarning" class="text-[10px] font-bold text-red-600 uppercase text-center mb-2 italic">Lengkapi Nama, Meja & Menu</p>
             <button id="btnPesan" onclick="kirimPesanan()" disabled class="btn-emboss w-full bg-[#00704A] text-white font-black py-5 rounded-3xl uppercase tracking-widest text-sm">
                 PESAN SEKARANG
             </button>
@@ -160,7 +162,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initMeja(); 
-        loadMenu(); // Di dalam loadMenu nanti kita panggil restore keranjang
+        loadMenu();
         checkSavedOrder();
     });
 
@@ -169,11 +171,17 @@
     function initMeja() {
         const sel = document.getElementById('nomorMeja');
         const savedMeja = localStorage.getItem('kodpen_meja');
+        
+        // AUTO-FILL DARI URL (?meja=10)
+        const urlParams = new URLSearchParams(window.location.search);
+        const mejaDariUrl = urlParams.get('meja');
+
         for(let i=1; i<=20; i++) {
             const opt = document.createElement('option');
             opt.value = i;
             opt.innerText = `MEJA ${i}`;
-            if(savedMeja == i) opt.selected = true;
+            if(mejaDariUrl == i) opt.selected = true;
+            else if(!mejaDariUrl && savedMeja == i) opt.selected = true;
             sel.appendChild(opt);
         }
     }
@@ -184,7 +192,6 @@
             const menus = await res.json();
             renderMenu(menus);
             
-            // RESTORE DRAFT: Ambil data keranjang dari localStorage setelah menu dimuat
             const savedCart = localStorage.getItem('kodpen_cart');
             if(savedCart) {
                 keranjang = JSON.parse(savedCart);
@@ -219,15 +226,11 @@
     }
 
     function qty(n, h, c) {
-        // Jika sudah ada transaksi aktif, kunci tombol qty
         if(localStorage.getItem('kodpen_id')) return;
-
         if(!keranjang[n]) keranjang[n] = {q:0, h:h};
         keranjang[n].q += c; if(keranjang[n].q < 0) keranjang[n].q = 0;
         const el = document.getElementById('q-' + cleanID(n));
         if(el) el.innerText = keranjang[n].q;
-        
-        // Simpan ke localStorage agar tidak hilang saat refresh
         localStorage.setItem('kodpen_cart', JSON.stringify(keranjang));
         updateRingkasan();
     }
@@ -251,44 +254,46 @@
     }
 
     function valBtn() {
-    const meja = document.getElementById('nomorMeja').value;
-    if(meja) localStorage.setItem('kodpen_meja', meja);
+        const nama = document.getElementById('namaPelanggan').value.trim();
+        const meja = document.getElementById('nomorMeja').value;
+        if(meja) localStorage.setItem('kodpen_meja', meja);
 
-    const payInput = document.querySelector('input[name="payment"]:checked');
-    const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
-    const btn = document.getElementById('btnPesan');
-    const warning = document.getElementById('payWarning');
-    const file = document.getElementById('buktiFile');
-    
-    // 1. Tentukan apakah pembayaran digital (QRIS atau Transfer) dipilih
-    const isDigitalPay = payInput && payInput.value !== 'Tunai';
-    document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
+        const payInput = document.querySelector('input[name="payment"]:checked');
+        const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
+        const btn = document.getElementById('btnPesan');
+        const warning = document.getElementById('payWarning');
+        const file = document.getElementById('buktiFile');
+        const qrisSection = document.getElementById('qrisSection');
+        
+        const isDigitalPay = payInput && payInput.value !== 'Tunai';
+        document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
 
-    // 2. LOGIKA BARU: Tampilkan qrisSection HANYA jika memilih "QRIS"
-    const qrisSection = document.getElementById('qrisSection');
-    if (payInput && payInput.value === 'QRIS') {
-        qrisSection.classList.remove('hidden');
-    } else {
-        qrisSection.classList.add('hidden');
-    }
+        // LOGIKA PERBAIKAN: Tampilkan QRIS
+        if (payInput && payInput.value === 'QRIS') {
+            qrisSection.classList.remove('hidden');
+        } else {
+            qrisSection.classList.add('hidden');
+        }
 
-    if (total > 0 && meja && payInput) {
-        if (!isDigitalPay || file.files.length > 0) { 
-            btn.disabled = false; 
-            warning.classList.add('hidden'); 
+        if (total > 0 && meja && nama && payInput) {
+            if (!isDigitalPay || file.files.length > 0) { 
+                btn.disabled = false; 
+                warning.classList.add('hidden'); 
+            } else { 
+                btn.disabled = true; 
+                warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); 
+            }
         } else { 
             btn.disabled = true; 
-            warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); 
+            warning.classList.remove('hidden'); 
         }
-    } else { 
-        btn.disabled = true; 
-        warning.classList.remove('hidden'); 
     }
-}
 
     async function kirimPesanan() {
         soundJemput.play().then(() => { soundJemput.pause(); soundJemput.currentTime = 0; }).catch(() => {});
         const meja = document.getElementById('nomorMeja').value;
+        const nama = document.getElementById('namaPelanggan').value.toUpperCase();
+        
         let detail = ""; 
         Object.keys(keranjang).forEach(k => { if(keranjang[k].q > 0) detail += `${k} (x${keranjang[k].q}), `; });
         
@@ -301,13 +306,12 @@
             f64 = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(fi.files[0]); }); 
         }
         
-        lastOrder = { orderId, meja, pesanan: detail.slice(0,-2), pembayaran: pay, total: document.getElementById('totalHarga').innerText, date: new Date().toLocaleString() };
+        lastOrder = { orderId, nama, meja, pesanan: detail.slice(0,-2), pembayaran: pay, total: document.getElementById('totalHarga').innerText, date: new Date().toLocaleString() };
         
         fetch(scriptURL, { method: 'POST', body: JSON.stringify({...lastOrder, fileBase64: f64, fileName: fi.files[0]?.name}) })
         .then(r => r.json()).then(() => { 
             localStorage.setItem('kodpen_id', orderId); 
             localStorage.setItem('kodpen_data', JSON.stringify(lastOrder)); 
-            // Hapus keranjang draft karena sudah jadi pesanan resmi
             localStorage.removeItem('kodpen_cart'); 
             window.location.reload(); 
         });
@@ -322,18 +326,19 @@
             document.getElementById('statusContainer').classList.remove('hidden');
             document.getElementById('btnMyBill').classList.remove('hidden');
 
-            // TAMPILKAN RINCIAN PESANAN YANG SUDAH DIPESAN
             const cont = document.getElementById('ringkasanContainer');
             const list = document.getElementById('ringkasanList');
             cont.classList.remove('hidden');
-            list.innerHTML = "";
+            list.innerHTML = `<div class="mb-2 text-[#00704A] font-black text-xs">PEMESAN: ${lastOrder.nama}</div>`;
             const items = lastOrder.pesanan.split(', ');
             items.forEach(item => {
                 list.innerHTML += `<div class="flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase"><span>${item}</span></div>`;
             });
             document.getElementById('totalHarga').innerText = lastOrder.total;
             document.getElementById('totalTextRingkasan').innerText = lastOrder.total;
-            document.getElementById('nomorMeja').disabled = true; // Kunci pilihan meja
+            document.getElementById('nomorMeja').disabled = true;
+            document.getElementById('namaPelanggan').value = lastOrder.nama;
+            document.getElementById('namaPelanggan').disabled = true;
 
             startPolling(sid);
         }
@@ -343,7 +348,6 @@
         setInterval(() => {
             fetch(`${scriptURL}?orderId=${id}`).then(r => r.json()).then(data => {
                 if(data.status === "NotFound") { localStorage.clear(); location.reload(); return; }
-                
                 document.getElementById('txtNoAntrean').innerText = "#" + data.antrean;
                 document.getElementById('txtSedangDiproses').innerText = (!data.sedangDiproses) ? "0" : "#" + data.sedangDiproses;
                 
@@ -365,7 +369,6 @@
                     document.getElementById('btnStopJemput').classList.remove('hidden');
                     if(!isMuted && !alarmManuallyStopped) soundJemput.play().catch(()=>{});
                 } else if(data.status === "Selesai") {
-                    // Transaksi selesai, hapus semua data storage
                     localStorage.clear(); location.reload();
                 }
             }).catch(e => {});
@@ -389,7 +392,7 @@
     function unduhStruk() {
         if(!lastOrder) return;
         const area = document.getElementById('receipt-area');
-        area.innerHTML = `<div style="text-align:center"><strong style="font-size:14px">KODPEN COFFEE</strong><br>MEJA ${lastOrder.meja}<br>${lastOrder.date}<br>----------------------------<br><div style="text-align:left">${lastOrder.pesanan.split(', ').join('<br>')}</div>----------------------------<br><strong>TOTAL: ${lastOrder.total}</strong></div>`;
+        area.innerHTML = `<div style="text-align:center"><strong style="font-size:14px">KODPEN COFFEE</strong><br>PEMESAN: ${lastOrder.nama}<br>MEJA ${lastOrder.meja}<br>${lastOrder.date}<br>----------------------------<br><div style="text-align:left">${lastOrder.pesanan.split(', ').join('<br>')}</div>----------------------------<br><strong>TOTAL: ${lastOrder.total}</strong></div>`;
         html2canvas(area, {scale:3}).then(c => { const a = document.createElement('a'); a.download = `Nota_${lastOrder.orderId}.png`; a.href = c.toDataURL(); a.click(); });
     }
 </script>
