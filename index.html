@@ -251,28 +251,40 @@
     }
 
     function valBtn() {
-        const meja = document.getElementById('nomorMeja').value;
-        if(meja) localStorage.setItem('kodpen_meja', meja); // Simpan nomor meja
+    const meja = document.getElementById('nomorMeja').value;
+    if(meja) localStorage.setItem('kodpen_meja', meja);
 
-        const payInput = document.querySelector('input[name="payment"]:checked');
-        const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
-        const btn = document.getElementById('btnPesan');
-        const warning = document.getElementById('payWarning');
-        const file = document.getElementById('buktiFile');
-        
-        const isDigitalPay = payInput && payInput.value !== 'Tunai';
-        document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
+    const payInput = document.querySelector('input[name="payment"]:checked');
+    const total = parseInt(document.getElementById('totalHarga').innerText.replace(/[^0-9]/g, '')) || 0;
+    const btn = document.getElementById('btnPesan');
+    const warning = document.getElementById('payWarning');
+    const file = document.getElementById('buktiFile');
+    
+    // 1. Tentukan apakah pembayaran digital (QRIS atau Transfer) dipilih
+    const isDigitalPay = payInput && payInput.value !== 'Tunai';
+    document.getElementById('uploadArea').classList.toggle('hidden', !isDigitalPay);
 
-        if (total > 0 && meja && payInput) {
-            if (!isDigitalPay || file.files.length > 0) { 
-                btn.disabled = false; 
-                warning.classList.add('hidden'); 
-            } else { 
-                btn.disabled = true; 
-                warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); 
-            }
-        } else { btn.disabled = true; warning.classList.remove('hidden'); }
+    // 2. LOGIKA BARU: Tampilkan qrisSection HANYA jika memilih "QRIS"
+    const qrisSection = document.getElementById('qrisSection');
+    if (payInput && payInput.value === 'QRIS') {
+        qrisSection.classList.remove('hidden');
+    } else {
+        qrisSection.classList.add('hidden');
     }
+
+    if (total > 0 && meja && payInput) {
+        if (!isDigitalPay || file.files.length > 0) { 
+            btn.disabled = false; 
+            warning.classList.add('hidden'); 
+        } else { 
+            btn.disabled = true; 
+            warning.innerText = "Wajib Upload Bukti!"; warning.classList.remove('hidden'); 
+        }
+    } else { 
+        btn.disabled = true; 
+        warning.classList.remove('hidden'); 
+    }
+}
 
     async function kirimPesanan() {
         soundJemput.play().then(() => { soundJemput.pause(); soundJemput.currentTime = 0; }).catch(() => {});
